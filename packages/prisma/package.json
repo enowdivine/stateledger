@@ -1,0 +1,52 @@
+{
+  "name": "@stateledger/prisma",
+  "version": "0.0.0",
+  "description": "Prisma adapter for stateledger.",
+  "license": "MIT",
+  "author": "Enow Divine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enowdivine/stateledger.git",
+    "directory": "packages/prisma"
+  },
+  "homepage": "https://github.com/enowdivine/stateledger#readme",
+  "bugs": {
+    "url": "https://github.com/enowdivine/stateledger/issues"
+  },
+  "keywords": [
+    "state-machine",
+    "prisma",
+    "stateledger",
+    "audit-trail"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@stateledger/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5"
+  }
+}

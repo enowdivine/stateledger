@@ -1,0 +1,54 @@
+{
+  "name": "@stateledger/core",
+  "version": "0.0.0",
+  "description": "Database-backed state machine for Node and TypeScript — core (ORM-agnostic).",
+  "license": "MIT",
+  "author": "Enow Divine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enowdivine/stateledger.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/enowdivine/stateledger#readme",
+  "bugs": {
+    "url": "https://github.com/enowdivine/stateledger/issues"
+  },
+  "keywords": [
+    "state-machine",
+    "fsm",
+    "audit-trail",
+    "transitions",
+    "postgres",
+    "typescript",
+    "stateledger"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./contract-tests": {
+      "types": "./dist/contract-tests.d.ts",
+      "import": "./dist/contract-tests.js",
+      "require": "./dist/contract-tests.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
