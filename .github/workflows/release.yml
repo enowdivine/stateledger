@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Workspace filter (e.g. @stateledger/core, or omit for all public)"
+        required: false
+        default: "@stateledger/core"
+      tag:
+        description: "Dist-tag to publish under"
+        required: true
+        default: "experimental"
+        type: choice
+        options:
+          - experimental
+          - next
+          - latest
+
+permissions:
+  contents: read
+  id-token: write   # for npm provenance once we adopt it
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          PKG_FILTER="${{ inputs.package }}"
+          TAG="${{ inputs.tag }}"
+          if [ -z "$PKG_FILTER" ]; then
+            pnpm -r --filter "./packages/**" publish --tag "$TAG" --access public --no-git-checks
+          else
+            pnpm --filter "$PKG_FILTER" publish --tag "$TAG" --access public --no-git-checks
+          fi
