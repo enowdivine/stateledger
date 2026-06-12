@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stateledger-payments-pg
+    environment:
+      POSTGRES_USER: stateledger
+      POSTGRES_PASSWORD: stateledger
+      POSTGRES_DB: stateledger_payments
+    ports:
+      - "5433:5432"
+    volumes:
+      - stateledger_payments_data:/var/lib/postgresql/data
+
+volumes:
+  stateledger_payments_data:

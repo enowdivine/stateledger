@@ -1,0 +1,66 @@
+// Prisma schema for the payments example.
+//
+// Three models:
+//   - Payment            — the business subject the machine transitions
+//   - LedgerEntry        — written transactionally by the after:captured callback
+//   - StateledgerTransition — the audit table @stateledger/prisma writes into
+//
+// The StateledgerTransition model is OPTIONAL for the adapter to function
+// (the adapter uses raw SQL throughout). We declare it here so application
+// code can read transition rows in a type-safe way without dropping to
+// `$queryRaw`. The schema language can't express the partial unique index
+// on `most_recent`, so we add that separately — see
+// `src/apply-partial-index.ts`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Payment {
+  id            String   @id @db.Uuid
+  amount        Int // smallest currency unit (e.g. pence/cents)
+  currency      String   @db.VarChar(3)
+  customerEmail String   @map("customer_email")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("payments")
+}
+
+model LedgerEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  paymentId String   @map("payment_id") @db.Uuid
+  amount    Int
+  currency  String   @db.VarChar(3)
+  kind      String // CAPTURE | REFUND
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([paymentId])
+  @@map("ledger_entries")
+}
+
+model StateledgerTransition {
+  // dbgenerated, not @default(uuid()): the adapter writes via raw INSERT
+  // (bypassing Prisma), so the UUID has to come from the column default in
+  // Postgres itself, not from Prisma's client-side generator.
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  machine        String
+  subjectId      String   @map("subject_id")
+  fromState      String?  @map("from_state")
+  toState        String   @map("to_state")
+  sortKey        Int      @map("sort_key")
+  mostRecent     Boolean  @default(true) @map("most_recent")
+  actorId        String?  @map("actor_id")
+  actorType      String?  @map("actor_type")
+  metadata       Json     @default("{}")
+  machineVersion Int      @default(1) @map("machine_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([machine, subjectId, sortKey])
+  @@index([machine, subjectId, sortKey(sort: Desc)])
+  @@map("stateledger_transitions")
+}

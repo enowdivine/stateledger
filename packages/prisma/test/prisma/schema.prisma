@@ -21,7 +21,10 @@ datasource db {
 // adapter, but useful as a reference for users who want a Prisma model on
 // top so they can read transitions from their own application code.
 model StateledgerTransition {
-  id             String   @id @default(uuid()) @db.Uuid
+  // dbgenerated, not @default(uuid()): the adapter writes via raw INSERT
+  // (bypassing Prisma), so the UUID must come from the column default in
+  // Postgres itself, not from Prisma's client-side generator.
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   machine        String
   subjectId      String   @map("subject_id")
   fromState      String?  @map("from_state")

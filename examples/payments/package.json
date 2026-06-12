@@ -1,0 +1,22 @@
+{
+  "name": "@stateledger-examples/payments",
+  "version": "0.0.0",
+  "private": true,
+  "description": "End-to-end example: a payments state machine backed by Postgres via @stateledger/prisma.",
+  "type": "module",
+  "scripts": {
+    "db:setup": "prisma db push && tsx src/apply-partial-index.ts",
+    "db:reset": "prisma db push --force-reset && tsx src/apply-partial-index.ts",
+    "simulate": "tsx --env-file=.env src/simulate.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stateledger/core": "workspace:*",
+    "@stateledger/prisma": "workspace:*",
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2"
+  }
+}

@@ -75,6 +75,12 @@ If you want a Prisma model on top for type-safe reads from your own code,
 you can add one alongside — see the [test schema](./test/prisma/schema.prisma)
 for an example. It's optional.
 
+> **Gotcha if you add the model.** Use
+> `@id @default(dbgenerated("gen_random_uuid()")) @db.Uuid` on the `id`
+> field — NOT `@default(uuid())`. The adapter writes rows via raw `INSERT`,
+> bypassing Prisma's client-side UUID generator. The default has to live
+> in the Postgres column, not on Prisma's side.
+
 ## Use it
 
 ```ts
