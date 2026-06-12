@@ -1,15 +1,15 @@
 # @stateledger/core
 
-> ⚠️ **Placeholder release — name reservation only.**
->
-> This `experimental` tag exists so the `@stateledger` npm scope is bound.
-> The package currently exports nothing useful. Follow [the GitHub repo](https://github.com/enowdivine/stateledger)
-> for status. The first real release will publish to the `latest` tag.
-
----
+[![npm](https://img.shields.io/npm/v/@stateledger/core?label=%40stateledger%2Fcore)](https://www.npmjs.com/package/@stateledger/core)
 
 A **database-backed state machine** for Node and TypeScript. The boring,
-audit-friendly kind, not the blockchain kind.
+audit-friendly kind, not the blockchain kind. This package holds the
+core logic — `defineMachine`, the `Adapter` interface, the type system.
+Bring your own adapter:
+[`@stateledger/prisma`](https://www.npmjs.com/package/@stateledger/prisma)
+for Postgres, or
+[`@stateledger/memory`](https://www.npmjs.com/package/@stateledger/memory)
+for tests.
 
 ## What you'd write yourself vs. what `stateledger` does
 
@@ -54,19 +54,15 @@ stages and needs an audit trail: orders, subscriptions, KYC checks,
 document approval, loan applications, support tickets. Same library, same
 patterns, different rulebook.
 
-## Roadmap
+## Install
 
-| Status | Item |
-|---|---|
-| ✅ Locked | `Adapter` interface, contract test pack, error model |
-| ✅ Locked | `defineMachine` + TS-narrowed `transitionTo` |
-| 🟡 Active | `@stateledger/memory` (publish the in-memory adapter) |
-| ⏳ Next | `@stateledger/prisma` — Postgres-backed adapter |
-| 🔜 v0.1 | First real release |
-| 🔜 v1.0 | Drizzle adapter, transactional outbox, time-travel API |
+```bash
+pnpm add @stateledger/core @stateledger/prisma @prisma/client
+```
 
-See the [GitHub repo](https://github.com/enowdivine/stateledger) for the
-architecture doc and design rationale.
+See the main [repo README](https://github.com/enowdivine/stateledger) for
+a full quickstart and the [`examples/payments/`](https://github.com/enowdivine/stateledger/tree/main/examples/payments)
+directory for a runnable end-to-end demo.
 
 ## License
 

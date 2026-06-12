@@ -5,9 +5,7 @@
 
 [![CI](https://github.com/enowdivine/stateledger/actions/workflows/ci.yml/badge.svg)](https://github.com/enowdivine/stateledger/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@stateledger/core?label=%40stateledger%2Fcore)](https://www.npmjs.com/package/@stateledger/core)
-
-> **Status:** Early work-in-progress. Public API not yet stable. Do not use
-> in production. Follow this repo for the first stable release.
+[![npm](https://img.shields.io/npm/v/@stateledger/prisma?label=%40stateledger%2Fprisma)](https://www.npmjs.com/package/@stateledger/prisma)
 
 The boring, audit-friendly kind of state machine — not the blockchain kind.
 Designed for payments, fintech, and any backend where you need to know
@@ -49,7 +47,11 @@ That's why GoCardless built [Statesman](https://github.com/gocardless/statesman)
 in Ruby after the third rewrite. Node didn't have an equivalent. That's
 the gap.
 
-## Example (preview — not yet shippable)
+## Quickstart
+
+```bash
+pnpm add @stateledger/core @stateledger/prisma @prisma/client
+```
 
 ```ts
 import { defineMachine } from "@stateledger/core";
@@ -69,7 +71,7 @@ const PaymentMachine = defineMachine({
     "after:authorized->captured": async (ctx) => {
       // Runs in the same DB transaction as the transition.
       // Throw here, and the transition rolls back.
-      await ctx.tx.ledgerEntry.create({ ... });
+      await ctx.tx.ledgerEntry.create({ data: { ... } });
     },
   },
 } as const);
@@ -81,9 +83,14 @@ const machine = PaymentMachine.for(payment.id, {
 
 await machine.transitionTo("pending");      // bootstrap
 await machine.transitionTo("authorized");   // typed, validated, locked, audited
-await machine.transitionTo("captured");
+await machine.transitionTo("captured");     // ledger entry written atomically
 await machine.history();                    // full timeline as typed rows
 ```
+
+> **See it run:** [`examples/payments/`](./examples/payments) is a
+> complete demo — Docker Postgres, full schema, five scenarios covering
+> the happy path, invalid transitions, guard rejections, transactional
+> callbacks, and a concurrent-webhook race. `pnpm db:setup && pnpm simulate`.
 
 ## Where this fits
 
@@ -110,22 +117,19 @@ yours.
 
 | Package | What | Status |
 |---|---|---|
-| [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Placeholder published |
-| [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Placeholder published |
-| [`@stateledger/prisma`](./packages/prisma) | Prisma adapter (Postgres). MVP target. | In design |
+| [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Published |
+| [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Published |
+| [`@stateledger/prisma`](./packages/prisma) | Prisma + Postgres adapter. Pessimistic locks by default, optimistic opt-in. | Published |
 | `@stateledger/drizzle` | Drizzle adapter. Roadmapped for v1.0. | Not started |
 | `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. | Not started |
-
-> Note: the package previously called `@stateledger/testing` (internal) has been
-> renamed to `@stateledger/memory` and is now public. The npm scope is bound,
-> so the rename is final.
 
 ## Development
 
 ```bash
 pnpm install
 pnpm build
-pnpm test
+pnpm test              # unit + in-memory contract tests
+pnpm --filter @stateledger/prisma test:integration   # real Postgres via testcontainers (needs Docker)
 ```
 
 Requires Node 20+ and pnpm 9+.

@@ -1,14 +1,10 @@
 # @stateledger/memory
 
-> In-memory adapter for [stateledger](https://github.com/enowdivine/stateledger).
-> Use it for tests, hello-world demos, and prototyping — **not production**.
-> State is lost on process exit.
+[![npm](https://img.shields.io/npm/v/@stateledger/memory?label=%40stateledger%2Fmemory)](https://www.npmjs.com/package/@stateledger/memory)
 
-> ⚠️ **Placeholder release.** This `experimental` tag exists alongside the
-> rest of the `@stateledger/*` scope while the API stabilizes. The first
-> real release will publish to the `latest` tag.
-
----
+In-memory adapter for [stateledger](https://github.com/enowdivine/stateledger).
+Use it for tests, hello-world demos, and prototyping — **not production**.
+State is lost on process exit.
 
 ## Install
 
@@ -59,7 +55,7 @@ console.log(await machine.history());
 - Anything where you'd be sad if a server restart wiped the state.
 
 For production, use [`@stateledger/prisma`](https://www.npmjs.com/package/@stateledger/prisma)
-(coming soon) or another persistent adapter.
+(Postgres-backed) or another persistent adapter.
 
 ## License
 

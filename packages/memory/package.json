@@ -1,6 +1,6 @@
 {
   "name": "@stateledger/memory",
-  "version": "0.0.1-experimental.0",
+  "version": "0.1.0",
   "description": "In-memory adapter for stateledger — for tests, hello-world demos, and prototyping.",
   "license": "MIT",
   "author": {

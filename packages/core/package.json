@@ -1,6 +1,6 @@
 {
   "name": "@stateledger/core",
-  "version": "0.0.1-experimental.0",
+  "version": "0.1.0",
   "description": "Database-backed state machine for Node and TypeScript — core (ORM-agnostic).",
   "license": "MIT",
   "author": {

@@ -4,10 +4,6 @@
 
 [![npm](https://img.shields.io/npm/v/@stateledger/prisma?label=%40stateledger%2Fprisma)](https://www.npmjs.com/package/@stateledger/prisma)
 
-> ⚠️ **Experimental.** Published under the `experimental` dist-tag during
-> early development. API may change. The first stable release will land
-> on the `latest` tag and bump to `0.1.0`.
-
 Wires [`@stateledger/core`](https://www.npmjs.com/package/@stateledger/core)
 to Postgres via Prisma. Pessimistic concurrency by default (advisory
 locks), transactional after-callbacks, immutable audit trail.
