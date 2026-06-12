@@ -21,5 +21,3 @@ This folder is for [Changesets](https://github.com/changesets/changesets) — a 
 - Independent versioning per package: `@stateledger/core` can be at 0.4 while `@stateledger/prisma` is at 0.2.
 - Atomic "release this set of changes together" semantics across the monorepo.
 - Generated `CHANGELOG.md` per package, so users can see exactly what changed.
-
-`@stateledger/testing` is marked as `ignore` because it's an internal testing helper, not published.

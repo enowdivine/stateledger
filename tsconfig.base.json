@@ -5,7 +5,7 @@
     "paths": {
       "@stateledger/core": ["packages/core/src/index.ts"],
       "@stateledger/core/contract-tests": ["packages/core/src/contract-tests.ts"],
-      "@stateledger/testing": ["packages/testing/src/index.ts"]
+      "@stateledger/memory": ["packages/memory/src/index.ts"]
     },
     "target": "ES2022",
     "module": "ESNext",

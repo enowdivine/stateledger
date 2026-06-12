@@ -12,7 +12,7 @@ import {
   GuardRejected,
   InvalidTransition,
 } from "../src/index.js";
-import { InMemoryAdapter } from "@stateledger/testing";
+import { InMemoryAdapter } from "@stateledger/memory";
 
 const PAYMENT_CONFIG = {
   name: "payment",

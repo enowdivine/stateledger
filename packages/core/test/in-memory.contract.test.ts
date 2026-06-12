@@ -6,7 +6,7 @@
  */
 
 import { runContractTests } from "../src/contract-tests.js";
-import { InMemoryAdapter } from "@stateledger/testing";
+import { InMemoryAdapter } from "@stateledger/memory";
 
 runContractTests({
   label: "InMemoryAdapter",

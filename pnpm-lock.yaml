@@ -35,24 +35,24 @@ importers:
 
   packages/core:
     devDependencies:
-      '@stateledger/testing':
+      '@stateledger/memory':
         specifier: workspace:*
-        version: link:../testing
+        version: link:../memory
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.21)
+
+  packages/memory:
+    dependencies:
+      '@stateledger/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/prisma:
     dependencies:
       '@prisma/client':
         specifier: '>=5'
         version: 7.8.0(typescript@5.9.3)
-      '@stateledger/core':
-        specifier: workspace:*
-        version: link:../core
-
-  packages/testing:
-    dependencies:
       '@stateledger/core':
         specifier: workspace:*
         version: link:../core

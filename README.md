@@ -99,10 +99,14 @@ await machine.history();                    // full timeline as typed rows
 | Package | What | Status |
 |---|---|---|
 | [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Placeholder published |
-| [`@stateledger/memory`](./packages/testing) | In-memory adapter. Great for tests + hello-world demos. | Coming next |
+| [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Placeholder published |
 | [`@stateledger/prisma`](./packages/prisma) | Prisma adapter (Postgres). MVP target. | In design |
 | `@stateledger/drizzle` | Drizzle adapter. Roadmapped for v1.0. | Not started |
 | `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. | Not started |
+
+> Note: the package previously called `@stateledger/testing` (internal) has been
+> renamed to `@stateledger/memory` and is now public. The npm scope is bound,
+> so the rename is final.
 
 ## Development
 

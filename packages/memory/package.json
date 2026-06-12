@@ -1,13 +1,13 @@
 {
-  "name": "@stateledger/core",
+  "name": "@stateledger/memory",
   "version": "0.0.1-experimental.0",
-  "description": "Database-backed state machine for Node and TypeScript — core (ORM-agnostic).",
+  "description": "In-memory adapter for stateledger — for tests, hello-world demos, and prototyping.",
   "license": "MIT",
   "author": "Enow Divine",
   "repository": {
     "type": "git",
     "url": "https://github.com/enowdivine/stateledger.git",
-    "directory": "packages/core"
+    "directory": "packages/memory"
   },
   "homepage": "https://github.com/enowdivine/stateledger#readme",
   "bugs": {
@@ -15,12 +15,10 @@
   },
   "keywords": [
     "state-machine",
-    "fsm",
-    "audit-trail",
-    "transitions",
-    "postgres",
-    "typescript",
-    "stateledger"
+    "in-memory",
+    "stateledger",
+    "testing",
+    "fixture"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -31,11 +29,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./contract-tests": {
-      "types": "./dist/contract-tests.d.ts",
-      "import": "./dist/contract-tests.js",
-      "require": "./dist/contract-tests.cjs"
     }
   },
   "files": ["dist", "README.md"],
@@ -51,16 +44,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "peerDependencies": {
-    "vitest": ">=1"
-  },
-  "peerDependenciesMeta": {
-    "vitest": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@stateledger/memory": "workspace:*",
-    "vitest": "^2.1.8"
+  "dependencies": {
+    "@stateledger/core": "workspace:*"
   }
 }
