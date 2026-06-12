@@ -1,0 +1,40 @@
+// Minimal Prisma schema used ONLY for integration tests.
+//
+// The Prisma adapter does all its persistence through raw SQL so it
+// doesn't depend on any model being declared. We still need a schema to
+// generate a PrismaClient binary, though, so this file exists.
+//
+// The generated client is emitted to ../node_modules/.prisma/test-client
+// so it doesn't collide with anything end users might have in their tree.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/test-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("STATELEDGER_TEST_DATABASE_URL")
+}
+
+// Mirrors the table @stateledger/prisma writes to. Not required by the
+// adapter, but useful as a reference for users who want a Prisma model on
+// top so they can read transitions from their own application code.
+model StateledgerTransition {
+  id             String   @id @default(uuid()) @db.Uuid
+  machine        String
+  subjectId      String   @map("subject_id")
+  fromState      String?  @map("from_state")
+  toState        String   @map("to_state")
+  sortKey        Int      @map("sort_key")
+  mostRecent     Boolean  @default(true) @map("most_recent")
+  actorId        String?  @map("actor_id")
+  actorType      String?  @map("actor_type")
+  metadata       Json     @default("{}")
+  machineVersion Int      @default(1) @map("machine_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([machine, subjectId, sortKey])
+  @@index([machine, subjectId, sortKey(sort: Desc)])
+  @@map("stateledger_transitions")
+}

@@ -9,6 +9,8 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/.turbo/**",
       "**/coverage/**",
+      // Prisma-generated test client (output of `prisma generate`).
+      "packages/prisma/test/prisma/**",
     ],
   },
   eslint.configs.recommended,

@@ -1,7 +1,7 @@
 {
   "name": "@stateledger/prisma",
-  "version": "0.0.0",
-  "description": "Prisma adapter for stateledger.",
+  "version": "0.0.1-experimental.0",
+  "description": "Prisma + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
   "license": "MIT",
   "author": "Enow Divine",
   "repository": {
@@ -16,8 +16,10 @@
   "keywords": [
     "state-machine",
     "prisma",
+    "postgres",
     "stateledger",
-    "audit-trail"
+    "audit-trail",
+    "fsm"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -35,6 +37,9 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests --exclude '**/postgres.contract.test.ts'",
+    "test:integration": "vitest run test/postgres.contract.test.ts",
+    "prisma:generate": "STATELEDGER_TEST_DATABASE_URL=postgresql://placeholder prisma generate --schema test/prisma/schema.prisma",
     "clean": "rm -rf dist"
   },
   "engines": {
@@ -48,5 +53,10 @@
   },
   "peerDependencies": {
     "@prisma/client": ">=5"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0",
+    "testcontainers": "^10.16.0"
   }
 }
