@@ -25,4 +25,16 @@ export type {
   TransitionRow,
 } from "./types.js";
 
+export { defineMachine, Machine, NarrowedMachine } from "./define-machine.js";
+export type { MachineFactory, InferMachineState } from "./define-machine.js";
+export type {
+  AllowedTargets,
+  BindOptions,
+  MachineConfig,
+  StateOf,
+  TransitionDecl,
+  TransitionOptions,
+  TransitionsOf,
+} from "./machine-types.js";
+
 export const version = "0.0.1-experimental.0";
