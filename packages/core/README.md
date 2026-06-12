@@ -52,6 +52,17 @@ flows). It assumes your state lives in memory, you bolt on persistence yourself.
 `stateledger` assumes **the database IS the state** from the start. Different
 problem, different tool.
 
+## Where this fits
+
+Built for payments and fintech, where a missed state change is a regulatory
+event. The API choices reflect that — pessimistic locking by default,
+transactional callbacks, immutable audit trail.
+
+The abstraction generalizes. Anywhere a business record moves between named
+stages and needs an audit trail: orders, subscriptions, KYC checks,
+document approval, loan applications, support tickets. Same library, same
+patterns, different rulebook.
+
 ## Roadmap
 
 | Status | Item |

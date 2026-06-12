@@ -94,6 +94,27 @@ await machine.transitionTo("captured");
 await machine.history();                    // full timeline as typed rows
 ```
 
+## Where this fits
+
+Built for **payments and fintech**, where a missed state change is a
+regulatory event. The API choices reflect that origin: pessimistic locking
+by default, transactional callbacks, an immutable audit trail.
+
+The abstraction generalizes naturally. Any business record that moves
+between named stages and needs an audit trail benefits from the same
+treatment:
+
+- **Orders** — `cart → submitted → paid → shipped → delivered`
+- **Subscriptions** — `trial → active → past_due → canceled`
+- **KYC / onboarding** — `submitted → reviewing → approved` (or `rejected`)
+- **Document workflows** — `draft → in_review → approved → archived`
+- **Loan applications** — `submitted → underwriting → approved → funded`
+- **Support tickets** — `new → assigned → in_progress → resolved`
+
+Same library, same patterns, different rulebook. The library is
+deliberately "dumb" about what the states mean — that semantic layer is
+yours.
+
 ## Packages
 
 | Package | What | Status |
