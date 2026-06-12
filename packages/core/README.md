@@ -43,15 +43,6 @@ first time, breaks 3 months later under load, and gets rewritten. That's why
 GoCardless built [Statesman](https://github.com/gocardless/statesman) in Ruby
 after the third rewrite. Node didn't have an equivalent. That's the gap.
 
-## How it compares to XState
-
-[XState](https://xstate.js.org) is the popular Node state machine library and
-it's excellent — for **in-memory** workflows (form wizards, UI state, agent
-flows). It assumes your state lives in memory, you bolt on persistence yourself.
-
-`stateledger` assumes **the database IS the state** from the start. Different
-problem, different tool.
-
 ## Where this fits
 
 Built for payments and fintech, where a missed state change is a regulatory

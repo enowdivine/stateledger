@@ -49,15 +49,6 @@ That's why GoCardless built [Statesman](https://github.com/gocardless/statesman)
 in Ruby after the third rewrite. Node didn't have an equivalent. That's
 the gap.
 
-## How it compares to XState
-
-[XState](https://xstate.js.org) is excellent — for **in-memory** workflows
-(form wizards, UI state, agent flows). It assumes your state lives in
-memory and you bolt on persistence yourself.
-
-`stateledger` assumes **the database IS the state** from the start.
-Different problem, different tool.
-
 ## Example (preview — not yet shippable)
 
 ```ts
