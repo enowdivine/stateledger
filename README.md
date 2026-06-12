@@ -1,36 +1,112 @@
 # stateledger
 
-> Database-backed state machine for Node and TypeScript. Transitions are persisted, audited, and concurrency-safe by default.
+> **A database-backed state machine for Node and TypeScript.** Transitions
+> are persisted, audited, and concurrency-safe by default.
 
 [![CI](https://github.com/enowdivine/stateledger/actions/workflows/ci.yml/badge.svg)](https://github.com/enowdivine/stateledger/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@stateledger/core?label=%40stateledger%2Fcore)](https://www.npmjs.com/package/@stateledger/core)
 
-**Status:** Early work-in-progress. Public API not yet stable; do not use in production.
+> **Status:** Early work-in-progress. Public API not yet stable. Do not use
+> in production. Follow this repo for the first stable release.
 
-The boring, audit-friendly kind of state machine — not the blockchain kind. Designed for payments, fintech, and any backend where you need to know exactly when each business record moved between states, who triggered it, and that no two processes can transition the same record at once.
+The boring, audit-friendly kind of state machine — not the blockchain kind.
+Designed for payments, fintech, and any backend where you need to know
+exactly when each business record moved between states, who triggered it,
+and that no two processes can transition it at the same time.
 
-## Why
+---
 
-The Node/TypeScript ecosystem has great in-memory state machines (XState) and standalone audit-log libraries, but nothing that combines:
+## Why this exists
 
-1. **Persisted transitions** — every state change is a row in a `transitions` table, not just an in-memory event.
-2. **Audit history** — immutable record of who/what/when, queryable as a first-class API.
-3. **Built-in concurrency safety** — two processes cannot transition the same record simultaneously.
+Most of us have written code like this:
 
-Ruby has [GoCardless Statesman](https://github.com/gocardless/statesman). Node/TS doesn't. That's the gap stateledger fills.
+```ts
+class Payment {
+  state: "pending" | "authorized" | "captured" = "pending";
+
+  authorize() {
+    if (this.state !== "pending") throw new Error("Cannot authorize");
+    this.state = "authorized";
+  }
+}
+```
+
+It works. Then you ship to production, and discover:
+
+| What breaks in production | What `stateledger` does |
+|---|---|
+| **Restart kills state.** It lived in memory. | Every transition is a row in your DB. Survives restarts, deploys, crashes. |
+| **Concurrent webhooks double-charge.** Two requests both pass the `if` check and both mutate state. | Acquires a lock on `(machine, subjectId)`. Concurrent transitions serialize cleanly. |
+| **No record of who/when/why.** Customer asks "when did my refund fail?" — no answer. | Every row has an actor, timestamp, and free-form metadata. `await machine.history()` returns the full timeline. |
+| **Compliance can't audit.** Regulators ask "show every state change in Q3, who triggered it." | It's a SQL query against the `transitions` table. |
+| **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
+| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | Reconstructable from history. `await machine.stateAt(timestamp)` (roadmapped). |
+| **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
+
+You could write all this yourself. Most teams have — it takes 2–4 weeks
+the first time, breaks 3 months later under load, and gets rewritten.
+That's why GoCardless built [Statesman](https://github.com/gocardless/statesman)
+in Ruby after the third rewrite. Node didn't have an equivalent. That's
+the gap.
+
+## How it compares to XState
+
+[XState](https://xstate.js.org) is excellent — for **in-memory** workflows
+(form wizards, UI state, agent flows). It assumes your state lives in
+memory and you bolt on persistence yourself.
+
+`stateledger` assumes **the database IS the state** from the start.
+Different problem, different tool.
+
+## Example (preview — not yet shippable)
+
+```ts
+import { defineMachine } from "@stateledger/core";
+import { createPrismaAdapter } from "@stateledger/prisma";
+
+const PaymentMachine = defineMachine({
+  name: "payment",
+  states: ["pending", "authorized", "captured", "settled", "failed"],
+  initialState: "pending",
+  transitions: [
+    { from: "pending",    to: "authorized" },
+    { from: "pending",    to: "failed" },
+    { from: "authorized", to: "captured" },
+    { from: "captured",   to: "settled" },
+  ],
+  callbacks: {
+    "after:authorized->captured": async (ctx) => {
+      // Runs in the same DB transaction as the transition.
+      // Throw here, and the transition rolls back.
+      await ctx.tx.ledgerEntry.create({ ... });
+    },
+  },
+} as const);
+
+const machine = PaymentMachine.for(payment.id, {
+  adapter: createPrismaAdapter(prisma),
+  actor: { id: "u-42", type: "USER" },
+});
+
+await machine.transitionTo("pending");      // bootstrap
+await machine.transitionTo("authorized");   // typed, validated, locked, audited
+await machine.transitionTo("captured");
+await machine.history();                    // full timeline as typed rows
+```
 
 ## Packages
 
-| Package | What |
-|---|---|
-| [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. |
-| [`@stateledger/prisma`](./packages/prisma) | Prisma adapter (Postgres). MVP target. |
-| `@stateledger/drizzle` | Drizzle adapter. Roadmapped for v1.0. |
-| `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. |
-| `@stateledger/testing` | Internal test fixtures and sample machines. Not published. |
+| Package | What | Status |
+|---|---|---|
+| [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Placeholder published |
+| [`@stateledger/memory`](./packages/testing) | In-memory adapter. Great for tests + hello-world demos. | Coming next |
+| [`@stateledger/prisma`](./packages/prisma) | Prisma adapter (Postgres). MVP target. | In design |
+| `@stateledger/drizzle` | Drizzle adapter. Roadmapped for v1.0. | Not started |
+| `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. | Not started |
 
 ## Development
 
-```
+```bash
 pnpm install
 pnpm build
 pnpm test

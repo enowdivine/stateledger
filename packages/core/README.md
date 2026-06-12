@@ -2,35 +2,69 @@
 
 > ⚠️ **Placeholder release — name reservation only.**
 >
-> This `experimental` tag exists so the `@stateledger` npm scope is bound. The package currently exports nothing useful. Do not install it expecting working features.
->
-> Follow [the GitHub repo](https://github.com/enowdivine/stateledger) for status. The first real release will publish to the `latest` tag.
+> This `experimental` tag exists so the `@stateledger` npm scope is bound.
+> The package currently exports nothing useful. Follow [the GitHub repo](https://github.com/enowdivine/stateledger)
+> for status. The first real release will publish to the `latest` tag.
 
 ---
 
-ORM-agnostic core of [**stateledger**](https://github.com/enowdivine/stateledger) — a database-backed state machine for Node and TypeScript. The boring, audit-friendly kind, not the blockchain kind.
+A **database-backed state machine** for Node and TypeScript. The boring,
+audit-friendly kind, not the blockchain kind.
 
-## Why this exists
+## What you'd write yourself vs. what `stateledger` does
 
-The Node/TS ecosystem has great in-memory state machines ([XState](https://xstate.js.org)) and standalone audit-log libraries, but nothing that combines:
+If you've ever rolled this in production, you've written something like:
 
-1. **Persisted transitions** — every state change is a row in a `transitions` table.
-2. **Audit history** — immutable record of who/what/when, queryable as a first-class API.
-3. **Built-in concurrency safety** — two processes cannot transition the same record simultaneously.
+```ts
+class Payment {
+  state: "pending" | "authorized" | "captured" = "pending";
 
-Ruby has [GoCardless Statesman](https://github.com/gocardless/statesman). Node/TS didn't, until now.
+  authorize() {
+    if (this.state !== "pending") throw new Error("Cannot authorize");
+    this.state = "authorized";
+  }
+}
+```
+
+Works fine. Until you ship it. Then you discover:
+
+| What breaks in production | What `stateledger` does |
+|---|---|
+| **Restart kills state.** It lived in memory. | Every transition is a row in your DB. Survives restarts, deploys, crashes. |
+| **Concurrent webhooks double-charge.** Two requests both pass the `if` check and both mutate state. | Acquires a lock on `(machine, subjectId)`. Concurrent transitions serialize cleanly. |
+| **No record of who/when/why.** Customer asks "when did my refund fail?" — no answer. | Every row has an actor, timestamp, and free-form metadata. `await machine.history()` returns the full timeline. |
+| **Compliance can't audit.** Regulators ask "show every state change in Q3, who triggered it." | It's a SQL query against the `transitions` table. |
+| **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
+| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | Reconstructable from history. `await machine.stateAt(timestamp)` (roadmapped). |
+| **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
+
+You could write all this yourself. Most teams have — it takes 2–4 weeks the
+first time, breaks 3 months later under load, and gets rewritten. That's why
+GoCardless built [Statesman](https://github.com/gocardless/statesman) in Ruby
+after the third rewrite. Node didn't have an equivalent. That's the gap.
+
+## How it compares to XState
+
+[XState](https://xstate.js.org) is the popular Node state machine library and
+it's excellent — for **in-memory** workflows (form wizards, UI state, agent
+flows). It assumes your state lives in memory, you bolt on persistence yourself.
+
+`stateledger` assumes **the database IS the state** from the start. Different
+problem, different tool.
 
 ## Roadmap
 
 | Status | Item |
 |---|---|
-| 🟡 Active | `Adapter` interface + contract test pack |
-| ⏳ Next | `defineMachine` with full TS inference |
-| ⏳ Next | Schema + locking strategy (advisory locks, Postgres-first) |
-| 🔜 v0.1 | First working release alongside `@stateledger/prisma` |
-| 🔜 v1.0 | Drizzle adapter, transactional outbox helper |
+| ✅ Locked | `Adapter` interface, contract test pack, error model |
+| ✅ Locked | `defineMachine` + TS-narrowed `transitionTo` |
+| 🟡 Active | `@stateledger/memory` (publish the in-memory adapter) |
+| ⏳ Next | `@stateledger/prisma` — Postgres-backed adapter |
+| 🔜 v0.1 | First real release |
+| 🔜 v1.0 | Drizzle adapter, transactional outbox, time-travel API |
 
-See the [architecture doc](https://github.com/enowdivine/stateledger#architecture) for design rationale.
+See the [GitHub repo](https://github.com/enowdivine/stateledger) for the
+architecture doc and design rationale.
 
 ## License
 
