@@ -1,6 +1,9 @@
-// @stateledger/testing — internal helper package
-//
-// Fixtures, sample machines, and harnesses for stateledger's own tests.
-// Not published to npm.
+/**
+ * @stateledger/testing — internal helper package.
+ *
+ * Re-exports the in-memory adapter so core's own tests (and future docs
+ * examples) can pull a working `Adapter` implementation without spinning up
+ * a database. Not published to npm.
+ */
 
-export const placeholder = true;
+export { InMemoryAdapter, type InMemoryTx } from "./in-memory-adapter.js";

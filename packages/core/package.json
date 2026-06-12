@@ -50,5 +50,17 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependencies": {
+    "vitest": ">=1"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@stateledger/testing": "workspace:*",
+    "vitest": "^2.1.8"
   }
 }
