@@ -3,7 +3,11 @@
   "version": "0.0.1-experimental.0",
   "description": "In-memory adapter for stateledger — for tests, hello-world demos, and prototyping.",
   "license": "MIT",
-  "author": "Enow Divine",
+  "author": {
+    "name": "Enow Divine",
+    "email": "sirdivine16@gmail.com",
+    "url": "https://github.com/enowdivine"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/enowdivine/stateledger.git",

@@ -3,9 +3,11 @@
  * `runContractTests` suite against a real Postgres booted via
  * testcontainers.
  *
- * Skipped from the default `pnpm test` (filename excluded in the
- * package's `test` script) so contributors without Docker can still run
- * unit tests. CI runs this via `pnpm test:integration`.
+ * Uses the `.integration.ts` extension instead of `.test.ts` so it's
+ * skipped by the default vitest test-file discovery — contributors
+ * without Docker (or Prisma's generated test client) can still run
+ * `pnpm test`. The `test:integration` script overrides the include
+ * pattern to pick this up.
  *
  * Run locally:
  *   pnpm --filter @stateledger/prisma exec prisma generate \\

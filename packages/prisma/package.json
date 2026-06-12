@@ -3,7 +3,11 @@
   "version": "0.0.1-experimental.0",
   "description": "Prisma + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
   "license": "MIT",
-  "author": "Enow Divine",
+  "author": {
+    "name": "Enow Divine",
+    "email": "sirdivine16@gmail.com",
+    "url": "https://github.com/enowdivine"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/enowdivine/stateledger.git",
@@ -37,8 +41,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests --exclude '**/postgres.contract.test.ts'",
-    "test:integration": "vitest run test/postgres.contract.test.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "prisma:generate": "STATELEDGER_TEST_DATABASE_URL=postgresql://placeholder prisma generate --schema test/prisma/schema.prisma",
     "clean": "rm -rf dist"
   },
