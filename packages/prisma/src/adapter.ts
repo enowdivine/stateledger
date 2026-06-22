@@ -205,6 +205,37 @@ class PrismaAdapter implements Adapter<PrismaRawCalls> {
     }
   }
 
+  async readStateAt(
+    tx: PrismaRawCalls | null,
+    machine: string,
+    subjectId: string,
+    at: Date,
+  ): Promise<TransitionRow | null> {
+    const client = tx ?? this.root;
+    try {
+      // Most recent transition row whose created_at <= cutoff. We order by
+      // sort_key DESC rather than created_at DESC for the tiebreak — sortKey
+      // is monotonic per (machine, subjectId) and is the canonical ordering
+      // we trust everywhere else in the library.
+      const rows = await client.$queryRawUnsafe<RawTransitionRow[]>(
+        `SELECT * FROM "${this.tableName}"
+           WHERE machine = $1 AND subject_id = $2 AND created_at <= $3
+           ORDER BY sort_key DESC
+           LIMIT 1`,
+        machine,
+        subjectId,
+        at,
+      );
+      const row = rows[0];
+      return row ? mapRow(row) : null;
+    } catch (err) {
+      throw new AdapterError(
+        `[${machine}] ${subjectId}: readStateAt failed`,
+        { cause: err },
+      );
+    }
+  }
+
   async updateSubjectState(
     tx: PrismaRawCalls,
     hint: SubjectStateHint,

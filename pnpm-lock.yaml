@@ -52,6 +52,25 @@ importers:
         specifier: ^4.19.2
         version: 4.22.4
 
+  examples/subscriptions:
+    dependencies:
+      '@prisma/client':
+        specifier: ^5.22.0
+        version: 5.22.0(prisma@5.22.0)
+      '@stateledger/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stateledger/prisma':
+        specifier: workspace:*
+        version: link:../../packages/prisma
+    devDependencies:
+      prisma:
+        specifier: ^5.22.0
+        version: 5.22.0
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
+
   packages/core:
     devDependencies:
       '@stateledger/memory':

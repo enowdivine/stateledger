@@ -83,6 +83,25 @@ export interface Adapter<TxHandle = unknown> {
   ): Promise<TransitionRow[]>;
 
   /**
+   * Return the transition that was current at `at` — i.e. the most recent
+   * row whose `createdAt <= at`. Returns `null` when no transition had
+   * occurred yet at that moment (the subject didn't exist).
+   *
+   * Powers `Machine.stateAt(at)`. Implementations should run a single query:
+   *   WHERE machine = ? AND subject_id = ? AND created_at <= ?
+   *   ORDER BY sort_key DESC LIMIT 1
+   *
+   * `tx` follows the same convention as `readHistory` — `null` for a fresh
+   * read outside any transaction.
+   */
+  readStateAt(
+    tx: TxHandle | null,
+    machine: string,
+    subjectId: string,
+    at: Date,
+  ): Promise<TransitionRow | null>;
+
+  /**
    * Run `fn` inside a transaction. The adapter opens one if `fn` is the
    * outermost call; if the caller already provided a transaction at the
    * machine level, this MUST join it rather than open a new one.

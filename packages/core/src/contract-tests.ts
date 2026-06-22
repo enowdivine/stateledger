@@ -181,6 +181,53 @@ export function runContractTests<TxHandle>(options: ContractTestOptions<TxHandle
       expect(history).toEqual([]);
     });
 
+    // ── readStateAt ─────────────────────────────────────────
+
+    it("readStateAt returns null when no transition exists at or before the cutoff", async () => {
+      // Subject has never transitioned at all.
+      const row = await adapter.readStateAt(null, MACHINE, "ghost-subject", new Date());
+      expect(row).toBeNull();
+
+      // Subject exists, but the cutoff is before its first transition.
+      await adapter.withTransaction(async (tx) => {
+        await adapter.appendTransition(tx, buildRow({ subjectId: "s1", toState: "pending", sortKey: 1 }));
+      });
+      const before = new Date(0); // 1970 — well before now
+      const row2 = await adapter.readStateAt(null, MACHINE, "s1", before);
+      expect(row2).toBeNull();
+    });
+
+    it("readStateAt returns the transition that was current at the moment", async () => {
+      // Append three transitions with a small wait so timestamps differ.
+      await adapter.withTransaction(async (tx) => {
+        await adapter.appendTransition(tx, buildRow({ subjectId: "s1", toState: "pending", sortKey: 1 }));
+      });
+      const tAfterFirst = new Date();
+      await new Promise((r) => setTimeout(r, 50));
+
+      await adapter.withTransaction(async (tx) => {
+        await adapter.appendTransition(tx, buildRow({ subjectId: "s1", fromState: "pending", toState: "authorized", sortKey: 2, mostRecent: true }));
+      });
+      const tAfterSecond = new Date();
+      await new Promise((r) => setTimeout(r, 50));
+
+      await adapter.withTransaction(async (tx) => {
+        await adapter.appendTransition(tx, buildRow({ subjectId: "s1", fromState: "authorized", toState: "captured", sortKey: 3, mostRecent: true }));
+      });
+
+      // At `tAfterFirst` only the first transition existed → "pending"
+      const at1 = await adapter.readStateAt(null, MACHINE, "s1", tAfterFirst);
+      expect(at1?.toState).toBe("pending");
+
+      // At `tAfterSecond` two transitions existed → "authorized"
+      const at2 = await adapter.readStateAt(null, MACHINE, "s1", tAfterSecond);
+      expect(at2?.toState).toBe("authorized");
+
+      // At now (after all three) → "captured"
+      const at3 = await adapter.readStateAt(null, MACHINE, "s1", new Date());
+      expect(at3?.toState).toBe("captured");
+    });
+
     // ── withTransaction ─────────────────────────────────────
 
     it("withTransaction returns the function result on success", async () => {

@@ -38,7 +38,7 @@ It works. Then you ship to production, and discover:
 | **No record of who/when/why.** Customer asks "when did my refund fail?" — no answer. | Every row has an actor, timestamp, and free-form metadata. `await machine.history()` returns the full timeline. |
 | **Compliance can't audit.** Regulators ask "show every state change in Q3, who triggered it." | It's a SQL query against the `transitions` table. |
 | **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
-| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | Reconstructable from history. `await machine.stateAt(timestamp)` (roadmapped). |
+| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | `await machine.stateAt(timestamp)` returns the state that was current at any past instant. |
 | **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
 
 You could write all this yourself. Most teams have — it takes 2–4 weeks
@@ -87,10 +87,42 @@ await machine.transitionTo("captured");     // ledger entry written atomically
 await machine.history();                    // full timeline as typed rows
 ```
 
-> **See it run:** [`examples/payments/`](./examples/payments) is a
-> complete demo — Docker Postgres, full schema, five scenarios covering
-> the happy path, invalid transitions, guard rejections, transactional
-> callbacks, and a concurrent-webhook race. `pnpm db:setup && pnpm simulate`.
+## Time-travel — `stateAt(timestamp)`
+
+Reconstruct the state at any past instant from the persisted history. One
+SQL query, no replay or simulation. Powers customer-support answers,
+end-of-month billing snapshots, compliance reports, and post-mortems.
+
+```ts
+// "What state was this payment in at 3am last Tuesday?"
+const state = await machine.stateAt(new Date("2026-06-17T03:00:00Z"));
+// → "authorized"   (or whichever state was current then)
+// → null            (if the subject didn't exist yet)
+```
+
+Practical example — a billing job that charges everyone whose subscription
+was `active` at the moment the month closed:
+
+```ts
+const endOfMonth = new Date("2026-06-30T23:59:59Z");
+for (const sub of subscriptions) {
+  const m = SubscriptionMachine.for(sub.id, { adapter });
+  if ((await m.stateAt(endOfMonth)) === "active") {
+    await chargeCard(sub);
+  }
+}
+```
+
+The decision is anchored to a fixed moment — no race condition between
+"the worker started" and "live state when it actually queried."
+
+> **See it run:**
+> - [`examples/payments/`](./examples/payments) — five scenarios against
+>   real Postgres in Docker. Pessimistic locking, transactional callbacks,
+>   a concurrent-webhook race. `pnpm db:setup && pnpm simulate`.
+> - [`examples/subscriptions/`](./examples/subscriptions) — subscription
+>   lifecycle using **optimistic concurrency**, plus a time-travel demo
+>   and a 10-subscriptions-in-parallel billing run.
 
 ## Where this fits
 

@@ -1,6 +1,6 @@
 {
   "name": "@stateledger/prisma",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prisma + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
   "license": "MIT",
   "author": {

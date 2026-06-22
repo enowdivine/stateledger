@@ -72,6 +72,40 @@ export class Machine<C extends MachineConfig, TxHandle = unknown, Subject = unkn
   }
 
   /**
+   * Return the state this subject was in at `at` — i.e. the most recent
+   * transition whose `createdAt <= at`. Returns `null` when the subject
+   * had no transitions yet at that moment.
+   *
+   * Reconstructed from the persisted history; no replay or simulation —
+   * the row's `toState` IS the state at that moment because every
+   * transition is timestamped at write time.
+   *
+   * Useful for customer support ("what state was this in when the issue
+   * happened?"), compliance / audit ("end-of-quarter snapshots"), and
+   * scheduled jobs ("charge everyone whose subscription was 'active' on
+   * the first of the month").
+   *
+   * Note on "right after a transition" queries: if you need a cutoff that
+   * is guaranteed to land just after a specific transition's commit,
+   * anchor to the row's own `createdAt` rather than `new Date()`. The
+   * DB clock and the host clock can drift by tens of milliseconds in
+   * either direction — `transitionTo()` returns the inserted row, so:
+   *
+   *   const row = await machine.transitionTo("active");
+   *   const justAfter = new Date(row.createdAt.getTime() + 1);
+   *   await machine.stateAt(justAfter); // → "active", reliably
+   */
+  async stateAt(at: Date): Promise<StateOf<C> | null> {
+    const row = await this.opts.adapter.readStateAt(
+      this.opts.tx ?? null,
+      this.config.name,
+      this.subjectId,
+      at,
+    );
+    return row ? (row.toState as StateOf<C>) : null;
+  }
+
+  /**
    * Transition to `to`. Validates declaratively, runs the guard if any,
    * appends the row, then runs the after-callback. All inside a single
    * transaction (either the caller's `tx` or a fresh one).

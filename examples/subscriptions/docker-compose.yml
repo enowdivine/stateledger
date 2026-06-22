@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stateledger-subscriptions-pg
+    environment:
+      POSTGRES_USER: stateledger
+      POSTGRES_PASSWORD: stateledger
+      POSTGRES_DB: stateledger_subscriptions
+    ports:
+      - "5434:5432"
+    volumes:
+      - stateledger_subscriptions_data:/var/lib/postgresql/data
+
+volumes:
+  stateledger_subscriptions_data:

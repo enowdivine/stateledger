@@ -1,0 +1,51 @@
+// Prisma schema for the subscriptions example.
+//
+// Two business models:
+//   - Subscription          — the subject the machine transitions
+//   - StateledgerTransition — the audit table @stateledger/prisma writes into
+//
+// The StateledgerTransition model is OPTIONAL for the adapter to function
+// (the adapter uses raw SQL throughout). We declare it here so application
+// code can read transition rows in a type-safe way without dropping to
+// `$queryRaw`. The schema language can't express the partial unique index
+// on `most_recent`, so we add that separately — see
+// `src/apply-partial-index.ts`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Subscription {
+  id            String   @id @db.Uuid
+  planCode      String   @map("plan_code") // e.g. "starter", "pro"
+  monthlyPrice  Int      @map("monthly_price") // smallest currency unit
+  currency      String   @db.VarChar(3)
+  customerEmail String   @map("customer_email")
+  startedAt     DateTime @default(now()) @map("started_at") @db.Timestamptz
+
+  @@map("subscriptions")
+}
+
+model StateledgerTransition {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  machine        String
+  subjectId      String   @map("subject_id")
+  fromState      String?  @map("from_state")
+  toState        String   @map("to_state")
+  sortKey        Int      @map("sort_key")
+  mostRecent     Boolean  @default(true) @map("most_recent")
+  actorId        String?  @map("actor_id")
+  actorType      String?  @map("actor_type")
+  metadata       Json     @default("{}")
+  machineVersion Int      @default(1) @map("machine_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([machine, subjectId, sortKey])
+  @@index([machine, subjectId, sortKey(sort: Desc)])
+  @@map("stateledger_transitions")
+}

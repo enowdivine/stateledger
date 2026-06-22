@@ -206,4 +206,41 @@ describe("defineMachine", () => {
       expect(await m.hasBeenIn("settled")).toBe(false);
     });
   });
+
+  describe("stateAt (time-travel)", () => {
+    it("returns null when the subject didn't exist at the given moment", async () => {
+      const { factory, adapter } = freshMachine();
+      const m = factory.for("p-1", { adapter });
+      // Subject never transitioned.
+      expect(await m.stateAt(new Date())).toBeNull();
+    });
+
+    it("returns the state that was current at the given moment", async () => {
+      const { factory, adapter } = freshMachine();
+      const m = factory.for("p-1", { adapter });
+
+      await m.transitionTo("pending");
+      const tAfterPending = new Date();
+      await new Promise((r) => setTimeout(r, 30));
+
+      await m.transitionTo("authorized");
+      const tAfterAuthorized = new Date();
+      await new Promise((r) => setTimeout(r, 30));
+
+      await m.transitionTo("captured");
+
+      expect(await m.stateAt(tAfterPending)).toBe("pending");
+      expect(await m.stateAt(tAfterAuthorized)).toBe("authorized");
+      expect(await m.stateAt(new Date())).toBe("captured");
+    });
+
+    it("returns null for a moment before the subject's first transition", async () => {
+      const { factory, adapter } = freshMachine();
+      const m = factory.for("p-1", { adapter });
+      await m.transitionTo("pending");
+
+      // 1970 — definitely before any of our test runs.
+      expect(await m.stateAt(new Date(0))).toBeNull();
+    });
+  });
 });

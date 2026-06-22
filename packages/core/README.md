@@ -35,7 +35,7 @@ Works fine. Until you ship it. Then you discover:
 | **No record of who/when/why.** Customer asks "when did my refund fail?" — no answer. | Every row has an actor, timestamp, and free-form metadata. `await machine.history()` returns the full timeline. |
 | **Compliance can't audit.** Regulators ask "show every state change in Q3, who triggered it." | It's a SQL query against the `transitions` table. |
 | **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
-| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | Reconstructable from history. `await machine.stateAt(timestamp)` (roadmapped). |
+| **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | `await machine.stateAt(timestamp)` returns the state that was current at any past instant. |
 | **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
 
 You could write all this yourself. Most teams have — it takes 2–4 weeks the
@@ -60,9 +60,64 @@ patterns, different rulebook.
 pnpm add @stateledger/core @stateledger/prisma @prisma/client
 ```
 
+## What you get
+
+```ts
+import { defineMachine } from "@stateledger/core";
+import { createPrismaAdapter } from "@stateledger/prisma";
+
+const PaymentMachine = defineMachine({
+  name: "payment",
+  states: ["pending", "authorized", "captured", "failed"],
+  initialState: "pending",
+  transitions: [
+    { from: "pending", to: "authorized" },
+    { from: "authorized", to: "captured" },
+  ],
+} as const);
+
+const m = PaymentMachine.for(payment.id, {
+  adapter: createPrismaAdapter(prisma),
+  actor: { id: "u-42", type: "USER" },
+});
+
+await m.transitionTo("pending");       // bootstrap
+await m.transitionTo("authorized");    // typed, validated, locked, audited
+await m.history();                     // every transition, oldest first
+await m.readCurrent();                 // most recent transition row
+await m.stateAt(new Date("…"));        // state at any past instant
+```
+
+## Time-travel — `stateAt(timestamp)`
+
+Returns the state the subject was in at any past instant. One SQL query
+against the existing history table — no replay, no simulation.
+
+```ts
+await m.stateAt(new Date("2026-06-17T03:00:00Z"))  // → "authorized"
+await m.stateAt(new Date(0))                        // → null (didn't exist yet)
+```
+
+Use it for:
+- **Customer support** — "what state was this in when the issue happened?"
+- **Billing snapshots** — "charge everyone who was `active` on the 1st"
+- **Compliance** — end-of-quarter state snapshots without custom SQL
+- **Post-mortems** — pin down the exact state at the moment an error fired
+
+If you need a cutoff that lands "right after" a specific transition,
+anchor to the row's own `createdAt` instead of `new Date()` to avoid
+clock skew between your app and the database:
+
+```ts
+const row = await m.transitionTo("active");
+const justAfter = new Date(row.createdAt.getTime() + 1);
+await m.stateAt(justAfter);   // → "active", reliably
+```
+
 See the main [repo README](https://github.com/enowdivine/stateledger) for
-a full quickstart and the [`examples/payments/`](https://github.com/enowdivine/stateledger/tree/main/examples/payments)
-directory for a runnable end-to-end demo.
+a full quickstart and [`examples/payments/`](https://github.com/enowdivine/stateledger/tree/main/examples/payments)
++ [`examples/subscriptions/`](https://github.com/enowdivine/stateledger/tree/main/examples/subscriptions)
+for runnable end-to-end demos.
 
 ## License
 

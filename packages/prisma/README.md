@@ -106,7 +106,23 @@ const machine = PaymentMachine.for(paymentId, {
 await machine.transitionTo("pending");      // bootstrap
 await machine.transitionTo("authorized");   // locked, validated, audited
 await machine.history();                    // full timeline
+await machine.stateAt(new Date("2026-06-17T03:00:00Z")); // time-travel
 ```
+
+## Time-travel — `stateAt(timestamp)`
+
+The Prisma adapter implements `stateAt()` with a single SQL query:
+
+```sql
+SELECT * FROM stateledger_transitions
+ WHERE machine = $1 AND subject_id = $2 AND created_at <= $3
+ ORDER BY sort_key DESC
+ LIMIT 1
+```
+
+Returns the row that was current at the cutoff, or `null` if the subject
+didn't exist yet. See the [core README](https://www.npmjs.com/package/@stateledger/core)
+for the full usage story; this adapter just executes the query.
 
 ## Joining an existing transaction
 

@@ -130,6 +130,26 @@ export class InMemoryAdapter implements Adapter<InMemoryTx> {
       .map((r) => ({ ...r }));
   }
 
+  async readStateAt(
+    tx: InMemoryTx | null,
+    machine: string,
+    subjectId: string,
+    at: Date,
+  ): Promise<TransitionRow | null> {
+    const cutoff = at.getTime();
+    // Most recent row whose createdAt <= cutoff. Sort by sortKey desc and
+    // pick the first match — sortKey is monotonic per (machine, subjectId)
+    // so ordering by it is equivalent to ordering by createdAt for our
+    // append-only history.
+    const candidates = this.snapshot(tx, machine, subjectId).filter(
+      (r) => r.createdAt.getTime() <= cutoff,
+    );
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.sortKey - a.sortKey);
+    const winner = candidates[0];
+    return winner ? { ...winner } : null;
+  }
+
   /**
    * Merge committed rows + this tx's pending appends/patches into a single
    * view. Reads inside a tx see their own pending writes.
