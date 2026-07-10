@@ -1,6 +1,6 @@
 {
   "name": "@stateledger/drizzle",
-  "version": "0.0.0",
+  "version": "0.3.0",
   "description": "Drizzle + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
   "license": "MIT",
   "author": {
