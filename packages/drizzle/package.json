@@ -1,0 +1,67 @@
+{
+  "name": "@stateledger/drizzle",
+  "version": "0.0.0",
+  "description": "Drizzle + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
+  "license": "MIT",
+  "author": {
+    "name": "Enow Divine",
+    "email": "sirdivine16@gmail.com",
+    "url": "https://github.com/enowdivine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enowdivine/stateledger.git",
+    "directory": "packages/drizzle"
+  },
+  "homepage": "https://github.com/enowdivine/stateledger#readme",
+  "bugs": {
+    "url": "https://github.com/enowdivine/stateledger/issues"
+  },
+  "keywords": [
+    "state-machine",
+    "drizzle",
+    "drizzle-orm",
+    "postgres",
+    "stateledger",
+    "audit-trail",
+    "fsm"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@stateledger/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.36"
+  },
+  "devDependencies": {
+    "drizzle-orm": "^0.36.4",
+    "pg": "^8.13.1",
+    "@types/pg": "^8.11.10",
+    "testcontainers": "^10.16.0"
+  }
+}

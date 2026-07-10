@@ -6,7 +6,8 @@
       "@stateledger/core": ["packages/core/src/index.ts"],
       "@stateledger/core/contract-tests": ["packages/core/src/contract-tests.ts"],
       "@stateledger/memory": ["packages/memory/src/index.ts"],
-      "@stateledger/prisma": ["packages/prisma/src/index.ts"]
+      "@stateledger/prisma": ["packages/prisma/src/index.ts"],
+      "@stateledger/drizzle": ["packages/drizzle/src/index.ts"]
     },
     "target": "ES2022",
     "module": "ESNext",

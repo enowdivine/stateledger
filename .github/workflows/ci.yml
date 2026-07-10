@@ -65,3 +65,6 @@ jobs:
 
       - name: Prisma adapter — integration
         run: pnpm --filter @stateledger/prisma test:integration
+
+      - name: Drizzle adapter — integration
+        run: pnpm --filter @stateledger/drizzle test:integration
