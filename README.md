@@ -152,7 +152,7 @@ yours.
 | [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Published |
 | [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Published |
 | [`@stateledger/prisma`](./packages/prisma) | Prisma + Postgres adapter. Pessimistic locks by default, optimistic opt-in. | Published |
-| `@stateledger/drizzle` | Drizzle adapter. Roadmapped for v1.0. | Not started |
+| [`@stateledger/drizzle`](./packages/drizzle) | Drizzle + Postgres adapter. Same shape as the Prisma adapter, works with any Drizzle Postgres driver. | Pending release |
 | `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. | Not started |
 
 ## Development
@@ -162,6 +162,7 @@ pnpm install
 pnpm build
 pnpm test              # unit + in-memory contract tests
 pnpm --filter @stateledger/prisma test:integration   # real Postgres via testcontainers (needs Docker)
+pnpm --filter @stateledger/drizzle test:integration  # same, against the Drizzle adapter
 ```
 
 Requires Node 20+ and pnpm 9+.
