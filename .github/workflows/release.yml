@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: "Workspace filter (e.g. @stateledger/core, or omit for all public)"
+        description: "Single package to publish (e.g. @stateledger/core). Leave 'all' to publish every public workspace package."
         required: false
-        default: "@stateledger/core"
+        default: "all"
       tag:
         description: "Dist-tag to publish under"
         required: true
@@ -49,7 +49,10 @@ jobs:
         run: |
           PKG_FILTER="${{ inputs.package }}"
           TAG="${{ inputs.tag }}"
-          if [ -z "$PKG_FILTER" ]; then
+          # "all" (default) or empty string publishes every workspace
+          # package. A specific package name (e.g. @stateledger/outbox)
+          # publishes only that one.
+          if [ -z "$PKG_FILTER" ] || [ "$PKG_FILTER" = "all" ]; then
             pnpm -r --filter "./packages/**" publish --tag "$TAG" --access public --no-git-checks
           else
             pnpm --filter "$PKG_FILTER" publish --tag "$TAG" --access public --no-git-checks
