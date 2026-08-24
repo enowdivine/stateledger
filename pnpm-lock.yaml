@@ -41,6 +41,9 @@ importers:
       '@stateledger/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@stateledger/outbox':
+        specifier: workspace:*
+        version: link:../../packages/outbox
       '@stateledger/prisma':
         specifier: workspace:*
         version: link:../../packages/prisma
@@ -104,6 +107,22 @@ importers:
       '@stateledger/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/outbox:
+    dependencies:
+      '@stateledger/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.20.0
+      pg:
+        specifier: ^8.13.1
+        version: 8.22.0
+      testcontainers:
+        specifier: ^10.16.0
+        version: 10.28.0
 
   packages/prisma:
     dependencies:

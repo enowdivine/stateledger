@@ -10,7 +10,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Client, Pool, type PoolClient } from "pg";
+import { Pool, type Client, type PoolClient } from "pg";
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 
 import { OUTBOX_SCHEMA_STATEMENTS } from "../src/schema-sql.js";
