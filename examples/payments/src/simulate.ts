@@ -1,13 +1,14 @@
 /**
  * Runnable demo of the payments machine.
  *
- * Walks through five scenarios that each highlight a value prop of
+ * Walks through six scenarios that each highlight a value prop of
  * stateledger:
- *   1. Happy path with persisted history
- *   2. Transactional after-callback (ledger entry written atomically)
- *   3. Invalid transition rejection (declared transitions enforced)
- *   4. Guard rejection (business preconditions enforced)
- *   5. Concurrent webhook race (locking + state validation prevent double-spend)
+ *   1. Happy path with persisted history + transactional ledger entry
+ *   2. Invalid transition rejection (declared transitions enforced)
+ *   3. Guard rejection (business preconditions enforced)
+ *   4. Concurrent webhook race (locking + state validation prevent double-spend)
+ *   5. Outbox delivery (receipt email dispatched by a background worker,
+ *      atomically enqueued with the capture)
  *
  * Run after `pnpm db:setup`:
  *   pnpm simulate
@@ -16,6 +17,7 @@
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { createPrismaAdapter } from "@stateledger/prisma";
+import { createWorker, type OutboxHandler, type WorkerEvent } from "@stateledger/outbox";
 import { GuardRejected, InvalidTransition } from "@stateledger/core";
 
 import { PaymentMachine, type PaymentSubject } from "./machine.js";
@@ -118,12 +120,78 @@ async function scenarioConcurrentWebhooks(): Promise<void> {
   await printHistory("history (still a single authorization)", p);
 }
 
+async function scenarioOutboxDelivery(): Promise<void> {
+  console.log("\n[5] Outbox: capture enqueued a receipt email — worker delivers it now");
+
+  // The capture inside scenarioHappyPath already dropped a receipt.email
+  // row into the outbox table. We could enqueue another one here to keep
+  // the scenarios independent, but reusing the earlier row is honest — it
+  // proves the row survived across "requests" the way it would in prod.
+  const p = await createPayment(1750, "grace@example.com");
+  const m = bind(p, "u-99", "USER");
+  await m.transitionTo("pending");
+  await m.transitionTo("authorized");
+  await m.transitionTo("captured"); // enqueues receipt.email atomically
+
+  const beforeRows = await prisma.$queryRawUnsafe<{ id: string; kind: string; status: string }[]>(
+    `SELECT id, kind, status FROM "stateledger_outbox" WHERE status = 'pending'`,
+  );
+  console.log(`  outbox: ${beforeRows.length} pending row(s) waiting for a worker`);
+
+  // Wire up a mock email handler. In production this is where you'd call
+  // SendGrid / Mailgun / Postmark — the outbox worker doesn't know or care.
+  const sent: { to: string; amount: number; currency: string }[] = [];
+  type ReceiptPayload = { to: string; amount: number; currency: string };
+  const receiptHandler: OutboxHandler<ReceiptPayload> = async (payload) => {
+    sent.push(payload);
+  };
+
+  const worker = createWorker({
+    client: prisma,
+    pollIntervalMs: 100,
+    handlers: {
+      "receipt.email": receiptHandler as OutboxHandler,
+    },
+    onEvent: (event: WorkerEvent) => {
+      if (event.type === "delivered") {
+        const p = event.record.payload as { to: string };
+        console.log(`  → worker delivered receipt.email to ${p.to} in ${event.durationMs}ms`);
+      }
+      if (event.type === "dead-lettered") {
+        console.log(`  → DLQ: ${event.record.id} (${event.record.kind})`);
+      }
+    },
+  });
+  worker.start();
+
+  // Wait for the worker to drain the pending queue. In prod this loop
+  // lives in a long-running process (pm2 / systemd / k8s deployment).
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const pending = await prisma.$queryRawUnsafe<{ count: number }[]>(
+      `SELECT COUNT(*)::int AS count FROM "stateledger_outbox" WHERE status = 'pending'`,
+    );
+    if ((pending[0]?.count ?? 0) === 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  await worker.stop();
+
+  console.log(`  ${sent.length} receipt email(s) 'sent' by the worker`);
+
+  const afterRows = await prisma.$queryRawUnsafe<{ status: string; count: number }[]>(
+    `SELECT status, COUNT(*)::int AS count FROM "stateledger_outbox" GROUP BY status`,
+  );
+  const summary = afterRows.map((r) => `${r.status}=${r.count}`).join(", ");
+  console.log(`  outbox final state: ${summary}`);
+}
+
 async function main(): Promise<void> {
-  console.log("=== @stateledger/prisma — payments example ===");
+  console.log("=== @stateledger/prisma + @stateledger/outbox — payments example ===");
   await scenarioHappyPath();
   await scenarioInvalidTransition();
   await scenarioGuardRejection();
   await scenarioConcurrentWebhooks();
+  await scenarioOutboxDelivery();
   console.log("\nAll scenarios completed.\n");
 }
 

@@ -40,6 +40,7 @@ It works. Then you ship to production, and discover:
 | **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
 | **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | `await machine.stateAt(timestamp)` returns the state that was current at any past instant. |
 | **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
+| **Side effects that leave the DB drift on failure.** Stripe capture succeeds, then your process crashes before you mark it captured — now the money moved but state didn't. | `@stateledger/outbox` writes the *intent* to a table in the same tx; a separate worker delivers at-least-once with backoff and a dead-letter queue. |
 
 You could write all this yourself. Most teams have — it takes 2–4 weeks
 the first time, breaks 3 months later under load, and gets rewritten.
@@ -116,10 +117,53 @@ for (const sub of subscriptions) {
 The decision is anchored to a fixed moment — no race condition between
 "the worker started" and "live state when it actually queried."
 
+## Side effects — `@stateledger/outbox`
+
+State machines are safe. Third-party APIs and message brokers aren't.
+`@stateledger/outbox` closes the gap: instead of calling Stripe (or hitting
+Kafka, SendGrid, an SMS provider…) inline and hoping nothing rolls back or
+crashes at the wrong moment, you write the *intent* to an outbox table
+inside the transition's transaction. A worker picks it up later and
+dispatches for real — with retries, exponential backoff, and a dead-letter
+queue after N failed attempts.
+
+```ts
+// In your after-callback | same tx as the transition write.
+callbacks: {
+  "after:authorized->captured": async ({ tx, subject }) => {
+    await enqueue(tx, {
+      kind: "stripe.capture",
+      payload: { paymentIntentId: subject.stripeId, amount: subject.amount },
+    });
+  },
+},
+```
+
+```ts
+// In a separate worker.ts you run under pm2/systemd/k8s.
+const worker = createWorker({
+  client: prisma,
+  handlers: {
+    "stripe.capture": async ({ paymentIntentId, amount }) => {
+      await stripe.paymentIntents.capture(paymentIntentId, {
+        amount_to_capture: amount,
+      });
+    },
+  },
+});
+worker.start();
+```
+
+The row commits atomically with the state change or not at all. The
+worker's `FOR UPDATE SKIP LOCKED` claim lets you run N workers safely.
+Full details, config surface, and DLQ recovery in
+[`packages/outbox/`](./packages/outbox).
+
 > **See it run:**
-> - [`examples/payments/`](./examples/payments) — five scenarios against
+> - [`examples/payments/`](./examples/payments) — six scenarios against
 >   real Postgres in Docker. Pessimistic locking, transactional callbacks,
->   a concurrent-webhook race. `pnpm db:setup && pnpm simulate`.
+>   a concurrent-webhook race, plus an outbox worker delivering a receipt
+>   email atomically enqueued with the capture. `pnpm db:setup && pnpm simulate`.
 > - [`examples/subscriptions/`](./examples/subscriptions) — subscription
 >   lifecycle using **optimistic concurrency**, plus a time-travel demo
 >   and a 10-subscriptions-in-parallel billing run.
@@ -152,8 +196,8 @@ yours.
 | [`@stateledger/core`](./packages/core) | Logic, types, `defineMachine`, the `Adapter` interface. Zero runtime deps. | Published |
 | [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Published |
 | [`@stateledger/prisma`](./packages/prisma) | Prisma + Postgres adapter. Pessimistic locks by default, optimistic opt-in. | Published |
-| [`@stateledger/drizzle`](./packages/drizzle) | Drizzle + Postgres adapter. Same shape as the Prisma adapter, works with any Drizzle Postgres driver. | Pending release |
-| `@stateledger/outbox` | Transactional outbox helper for side effects. Roadmapped for v1.0. | Not started |
+| [`@stateledger/drizzle`](./packages/drizzle) | Drizzle + Postgres adapter. Same shape as the Prisma adapter, works with any Drizzle Postgres driver. | Published |
+| [`@stateledger/outbox`](./packages/outbox) | Transactional outbox — `enqueue()` inside your transition tx, plus a `createWorker()` that polls, claims (`FOR UPDATE SKIP LOCKED`), dispatches, retries with backoff, and dead-letters. 26 integration tests. | Published in v1.0 |
 
 ## Development
 

@@ -8,6 +8,11 @@ Wires [`@stateledger/core`](https://www.npmjs.com/package/@stateledger/core)
 to Postgres via Prisma. Pessimistic concurrency by default (advisory
 locks), transactional after-callbacks, immutable audit trail.
 
+Pairs with [`@stateledger/outbox`](https://www.npmjs.com/package/@stateledger/outbox)
+for external side effects (Stripe, email, Kafka) that need to ship
+atomically with the state change or not at all — enqueue an intent inside
+your after-callback, a background worker delivers it with retries + DLQ.
+
 ## Install
 
 ```bash

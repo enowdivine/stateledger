@@ -1,16 +1,18 @@
 /**
- * Applies the partial unique index that Prisma's DSL can't express.
+ * Post-`prisma db push` DDL that Prisma's schema language can't express:
  *
- * Run after `prisma migrate dev` / `prisma db push`. Idempotent — uses
- * `IF NOT EXISTS` so re-running is safe.
+ *  - Partial unique index on `stateledger_transitions` — the hard
+ *    correctness invariant `@stateledger/prisma` relies on.
+ *  - Full `stateledger_outbox` table + its indexes — the payments example
+ *    uses `@stateledger/outbox` to enqueue a receipt email in the same
+ *    transaction as the capture. Ships as raw SQL from the outbox package
+ *    so any adapter (Prisma, Drizzle, raw pg) can install it identically.
  *
- * Without this index, `@stateledger/prisma` still functions in
- * pessimistic-lock mode (because advisory locks serialize writers), but
- * the partial unique constraint is the hard correctness invariant the
- * library leans on for optimistic mode and as a defense in depth.
+ * Idempotent — every statement uses `IF NOT EXISTS`, so re-running is safe.
  */
 
 import { PrismaClient } from "@prisma/client";
+import { OUTBOX_SCHEMA_STATEMENTS } from "@stateledger/outbox";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +23,13 @@ async function main(): Promise<void> {
       WHERE most_recent = TRUE
   `);
   console.log("✓ partial unique index applied");
+
+  // Prisma rejects multi-statement scripts to $executeRawUnsafe (each call
+  // is a prepared statement), so we loop the array shape.
+  for (const stmt of OUTBOX_SCHEMA_STATEMENTS) {
+    await prisma.$executeRawUnsafe(stmt);
+  }
+  console.log("✓ stateledger_outbox table + indexes applied");
 }
 
 main()

@@ -4,6 +4,8 @@ Drizzle + Postgres adapter for [stateledger](https://github.com/enowdivine/state
 
 Works with any Drizzle Postgres driver: `node-postgres`, `postgres-js`, `neon-serverless`, `vercel-postgres`.
 
+Pairs with [`@stateledger/outbox`](https://www.npmjs.com/package/@stateledger/outbox) for external side effects that must ship atomically with a transition — the outbox is structurally typed on `$queryRawUnsafe` / `$executeRawUnsafe`, satisfied by any raw-SQL-capable client.
+
 ## Install
 
 ```sh

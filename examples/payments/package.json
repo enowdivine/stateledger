@@ -13,6 +13,7 @@
   "dependencies": {
     "@stateledger/core": "workspace:*",
     "@stateledger/prisma": "workspace:*",
+    "@stateledger/outbox": "workspace:*",
     "@prisma/client": "^5.22.0"
   },
   "devDependencies": {

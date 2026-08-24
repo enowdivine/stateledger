@@ -1,29 +1,29 @@
 {
-  "name": "@stateledger/prisma",
+  "name": "@stateledger/outbox",
   "version": "1.0.0",
-  "description": "Prisma + Postgres adapter for stateledger — persisted, audited, concurrency-safe state machines.",
+  "description": "Transactional outbox for stateledger — safe side effects that survive rollbacks, restarts, and third-party downtime.",
   "license": "MIT",
   "author": {
     "name": "Enow Divine",
-    "email": "sirdivine16@gmail.com",
+    "email": "hello@saassimplified.net",
     "url": "https://github.com/enowdivine"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/enowdivine/stateledger.git",
-    "directory": "packages/prisma"
+    "directory": "packages/outbox"
   },
   "homepage": "https://github.com/enowdivine/stateledger#readme",
   "bugs": {
     "url": "https://github.com/enowdivine/stateledger/issues"
   },
   "keywords": [
-    "state-machine",
-    "prisma",
-    "postgres",
     "stateledger",
-    "audit-trail",
-    "fsm"
+    "outbox",
+    "transactional-outbox",
+    "postgres",
+    "state-machine",
+    "reliability"
   ],
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,7 +43,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "prisma:generate": "STATELEDGER_TEST_DATABASE_URL=postgresql://placeholder prisma generate --schema test/prisma/schema.prisma",
     "clean": "rm -rf dist"
   },
   "engines": {
@@ -55,12 +54,9 @@
   "dependencies": {
     "@stateledger/core": "workspace:*"
   },
-  "peerDependencies": {
-    "@prisma/client": ">=5"
-  },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
-    "prisma": "^5.22.0",
+    "@types/pg": "^8.11.10",
+    "pg": "^8.13.1",
     "testcontainers": "^10.16.0"
   }
 }

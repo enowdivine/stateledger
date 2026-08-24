@@ -1,25 +1,30 @@
 # @stateledger-examples/payments
 
 End-to-end example: a payments state machine backed by Postgres via
-[`@stateledger/prisma`](../../packages/prisma).
+[`@stateledger/prisma`](../../packages/prisma) and
+[`@stateledger/outbox`](../../packages/outbox).
 
-Walks through five scenarios that exercise the library's value props:
+Walks through six scenarios that exercise the library's value props:
 
-1. **Happy path** — `pending` → `authorized` → `captured`, with the full
-   timeline persisted in the `stateledger_transitions` table.
-2. **Transactional after-callback** — capturing a payment writes a
-   `ledger_entries` row in the **same** transaction. If the ledger insert
-   throws, the transition rolls back. No "captured payment with no
-   ledger entry" can land in the DB.
-3. **Invalid transition** — trying to jump from `pending` directly to
+1. **Happy path + transactional after-callback** — `pending` → `authorized`
+   → `captured`, with the full timeline persisted in
+   `stateledger_transitions`. Capturing also writes a `ledger_entries` row
+   AND enqueues a `receipt.email` outbox note in the **same** transaction.
+   If any of the writes throw, everything rolls back — no "captured
+   payment with no ledger entry" and no "captured payment with a rogue
+   email queued but no state change" can land in the DB.
+2. **Invalid transition** — trying to jump from `pending` directly to
    `settled` throws `InvalidTransition` because no such transition was
    declared.
-4. **Guard rejection** — a zero-amount payment can't be authorized
+3. **Guard rejection** — a zero-amount payment can't be authorized
    (declared guard rejects it as `GuardRejected`).
-5. **Concurrent webhooks** — two parallel attempts to authorize the same
+4. **Concurrent webhooks** — two parallel attempts to authorize the same
    payment. Pessimistic advisory locking serializes them; the second one
    sees the payment is already authorized and is rejected. No
    double-authorize.
+5. **Outbox delivery** — spins up an in-process `createWorker`, drains the
+   pending `receipt.email` rows, and shows the worker events (`delivered`,
+   `dead-lettered`). Same worker code you'd run under pm2/systemd in prod.
 
 ## Quickstart
 

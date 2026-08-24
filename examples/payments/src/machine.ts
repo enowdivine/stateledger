@@ -7,6 +7,7 @@
  */
 
 import { defineMachine } from "@stateledger/core";
+import { enqueue } from "@stateledger/outbox";
 import type { Prisma } from "@prisma/client";
 
 export type PaymentSubject = {
@@ -37,19 +38,39 @@ export const PaymentMachine = defineMachine({
     },
   },
   callbacks: {
-    // After a capture, write a ledger entry. Both writes share the same
-    // transaction — if the ledger insert throws (constraint violation,
-    // connection drop), the transition rolls back too. No "captured
-    // payment with no ledger entry" can ever land in the database.
+    // After a capture, do TWO things in the same transaction:
+    //
+    //  1. Write a ledger entry. In-database side effect — safe to do inline
+    //     because it's on the same connection as the transition write.
+    //
+    //  2. Enqueue an outbox note to send the customer a receipt email.
+    //     The email itself is an OUT-of-database side effect (SMTP, HTTP,
+    //     mail provider), which is exactly the case the outbox is for —
+    //     doing it inline would risk a "captured payment but no email"
+    //     drift if the mail server is down or the process crashes.
+    //
+    // Both writes commit atomically with the transition. If either throws,
+    // the whole transaction rolls back and no state changed.
     "after:authorized->captured": async (ctx) => {
       const p = ctx.subject as PaymentSubject;
       const tx = ctx.tx as Prisma.TransactionClient;
+
       await tx.ledgerEntry.create({
         data: {
           paymentId: p.id,
           amount: p.amount,
           currency: p.currency,
           kind: "CAPTURE",
+        },
+      });
+
+      await enqueue(tx, {
+        kind: "receipt.email",
+        payload: {
+          paymentId: p.id,
+          to: p.customerEmail,
+          amount: p.amount,
+          currency: p.currency,
         },
       });
     },

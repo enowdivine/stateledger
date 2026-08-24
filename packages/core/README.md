@@ -37,6 +37,7 @@ Works fine. Until you ship it. Then you discover:
 | **Bugs corrupt state silently.** A bad code path writes "pending" → "settled" without going through "authorized". | Validates against declared transitions on every write. Throws `InvalidTransition` immediately. |
 | **Time-travel is impossible.** "What state was this in at 3am Tuesday?" | `await machine.stateAt(timestamp)` returns the state that was current at any past instant. |
 | **After-effects can leave you inconsistent.** State updated, then ledger write failed, now you have a charge with no ledger entry. | After-callbacks run in the same transaction as the row insert. Throw → both roll back. |
+| **External side effects drift.** Stripe capture succeeds, then your process crashes before you mark it captured — money moved, state didn't. | Pair with [`@stateledger/outbox`](../outbox): write the intent to a table inside the same tx, dispatch it later with a worker (retries + DLQ). |
 
 You could write all this yourself. Most teams have — it takes 2–4 weeks the
 first time, breaks 3 months later under load, and gets rewritten. That's why
