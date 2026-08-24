@@ -16,7 +16,7 @@
  */
 
 import { afterAll, beforeAll } from "vitest";
-import { GenericContainer, type StartedTestContainer } from "testcontainers";
+import { GenericContainer, Wait, type StartedTestContainer } from "testcontainers";
 import { runContractTests } from "@stateledger/core/contract-tests";
 
 import { PrismaClient } from "../node_modules/.prisma/test-client/index.js";
@@ -33,7 +33,14 @@ beforeAll(async () => {
       POSTGRES_PASSWORD: "stateledger",
       POSTGRES_DB: "stateledger_test",
     })
-    .withStartupTimeout(60_000)
+    // Wait until Postgres is actually accepting connections. `withStartupTimeout`
+    // alone only waits for the container process to start | Postgres writes
+    // "ready to accept connections" TWICE (once during init-scripts phase,
+    // then again after final startup), so we wait for the 2nd occurrence.
+    .withWaitStrategy(
+      Wait.forLogMessage(/database system is ready to accept connections/, 2),
+    )
+    .withStartupTimeout(120_000)
     .start();
 
   const url =

@@ -11,7 +11,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Pool, type Client, type PoolClient } from "pg";
-import { GenericContainer, type StartedTestContainer } from "testcontainers";
+import { GenericContainer, Wait, type StartedTestContainer } from "testcontainers";
 
 import { OUTBOX_SCHEMA_STATEMENTS } from "../src/schema-sql.js";
 import type { OutboxTx } from "../src/types.js";
@@ -58,7 +58,15 @@ export async function bootTestPostgres(): Promise<TestPostgresHandle> {
       POSTGRES_PASSWORD: "outbox",
       POSTGRES_DB: "outbox_test",
     })
-    .withStartupTimeout(60_000)
+    // Wait until Postgres is accepting connections. `withStartupTimeout` on
+    // its own only waits for the container process; Postgres logs "ready to
+    // accept connections" twice — once during init-scripts, then again on
+    // final startup — so we wait for the 2nd occurrence to avoid CI-race
+    // FATAL "database system is starting up" errors.
+    .withWaitStrategy(
+      Wait.forLogMessage(/database system is ready to accept connections/, 2),
+    )
+    .withStartupTimeout(120_000)
     .start();
 
   const url =

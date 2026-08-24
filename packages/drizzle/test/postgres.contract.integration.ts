@@ -12,7 +12,7 @@
  */
 
 import { afterAll, beforeAll } from "vitest";
-import { GenericContainer, type StartedTestContainer } from "testcontainers";
+import { GenericContainer, Wait, type StartedTestContainer } from "testcontainers";
 import { runContractTests } from "@stateledger/core/contract-tests";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -32,7 +32,12 @@ beforeAll(async () => {
       POSTGRES_PASSWORD: "stateledger",
       POSTGRES_DB: "stateledger_test",
     })
-    .withStartupTimeout(60_000)
+    // Wait for Postgres to actually accept connections (2nd log occurrence).
+    // See prisma integration test for the full explanation.
+    .withWaitStrategy(
+      Wait.forLogMessage(/database system is ready to accept connections/, 2),
+    )
+    .withStartupTimeout(120_000)
     .start();
 
   const connectionString =
