@@ -29,6 +29,16 @@ import type {
 const DEFAULT_TABLE = "stateledger_transitions";
 
 /**
+ * Postgres's NAMEDATALEN - 1. An identifier longer than this is TRUNCATED
+ * rather than rejected, with no error and no warning, so a `tableName` of 70
+ * characters would quietly address its own first 63. Worse, two configured
+ * names sharing a 63-character prefix resolve to the same physical table,
+ * which in a per-tenant-table layout mixes tenants together silently. Reject
+ * instead.
+ */
+const MAX_IDENTIFIER_LENGTH = 63;
+
+/**
  * Internal: raw shape we get back from Postgres before mapping to the
  * library's `TransitionRow`.
  */
@@ -363,6 +373,12 @@ function assertValidIdentifier(name: string): void {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
     throw new AdapterError(
       `invalid SQL identifier: ${JSON.stringify(name)} (must match /^[A-Za-z_][A-Za-z0-9_]*$/)`,
+    );
+  }
+  if (name.length > MAX_IDENTIFIER_LENGTH) {
+    throw new AdapterError(
+      `invalid SQL identifier: ${JSON.stringify(name)} is ${name.length} characters; ` +
+        `Postgres truncates identifiers to ${MAX_IDENTIFIER_LENGTH} and would address a different relation`,
     );
   }
 }

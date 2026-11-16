@@ -11,7 +11,7 @@
  * Idempotent — every statement uses `IF NOT EXISTS`, so re-running is safe.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/client/index.js";
 import { OUTBOX_SCHEMA_STATEMENTS } from "@stateledger/outbox";
 
 const prisma = new PrismaClient();

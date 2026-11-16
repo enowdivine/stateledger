@@ -14,7 +14,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/client/index.js";
 import { createPrismaAdapter } from "@stateledger/prisma";
 
 import { SubscriptionMachine, type SubscriptionSubject } from "./machine.js";

@@ -11,6 +11,11 @@ export default tseslint.config(
       "**/coverage/**",
       // Prisma-generated test client (output of `prisma generate`).
       "packages/prisma/test/prisma/**",
+      // Same thing for the examples. Each one generates its own client into
+      // `generated/` so the two cannot overwrite each other in the shared
+      // @prisma/client install, which also means two more directories of
+      // generated code that is not ours to lint.
+      "examples/*/generated/**",
     ],
   },
   eslint.configs.recommended,

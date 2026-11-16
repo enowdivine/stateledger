@@ -1,0 +1,139 @@
+name: Feature request
+description: Propose a capability, an API change, or a new adapter.
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most useful thing you can tell me is the problem, not the API. The
+        library is deliberately small, and several requests that arrived as
+        "add this option" turned out to have a better answer once the
+        underlying goal was clear. So lead with what you are trying to
+        accomplish, and treat the proposed shape as optional.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing open and closed issues and did not find this.
+          required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to accomplish
+      description: >
+        The real task, in terms of your system. For example "reconcile a day of
+        payment states against our processor's report" or "let support staff see
+        why a refund stalled" rather than "expose a new query method".
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: How you handle it today
+      description: >
+        Current workaround, including the one where there is none and the work
+        just does not happen. If you are reaching around the library to query
+        the transitions table directly, say so and show the query. That is a
+        strong signal about what the API is missing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed shape, if you have one
+      description: >
+        Sketch the API you imagine. Rough pseudocode is fine, and leaving this
+        empty is fine too.
+      render: typescript
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part this touches
+      description: Pick everything that seems in scope.
+      multiple: true
+      options:
+        - "Core machine definition, guards, or callbacks"
+        - "History, time-travel, or querying"
+        - "Locking and concurrency"
+        - "An existing adapter"
+        - "A new adapter"
+        - "Outbox and side-effect delivery"
+        - "Types and inference"
+        - "Docs or examples"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ### New adapter requests
+
+        The next three fields only matter if you are asking for a new adapter.
+        Skip them otherwise.
+
+        The existing Postgres adapters lean on two Postgres features for their
+        guarantees: `pg_advisory_xact_lock` for the pessimistic per-subject
+        lock, and a partial unique index on `most_recent` to make a lost
+        optimistic race fail at write time. A database that has neither cannot
+        offer the same promises, so whether the target is Postgres-backed
+        decides whether an adapter is feasible at all.
+
+  - type: input
+    id: adapter_target
+    attributes:
+      label: New adapter | which ORM, query builder, or driver
+      description: Name it and link its docs, and note the version range you need.
+      placeholder: "sequelize v6"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: adapter_postgres
+    attributes:
+      label: New adapter | is it Postgres-backed
+      options:
+        - "Yes, plain Postgres"
+        - "Yes, a Postgres-compatible host (Neon, Supabase, RDS, Vercel Postgres)"
+        - "Postgres wire-compatible but missing advisory locks (for example CockroachDB)"
+        - "No, a different database engine"
+    validations:
+      required: false
+
+  - type: textarea
+    id: adapter_guarantees
+    attributes:
+      label: New adapter | what happens to the concurrency guarantees
+      description: >
+        Answer this if the target lacks advisory locks, partial unique indexes,
+        or both. What replaces them, or which guarantee are you proposing be
+        dropped and documented as dropped? A proposal that does not address
+        this cannot be evaluated.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Would you be willing to contribute this
+      description: >
+        No wrong answer here, and a "no" does not sink the request. This is a
+        solo-maintained project, so it helps to know up front whether to plan
+        around review time or implementation time. CONTRIBUTING.md covers the
+        adapter workflow and the contract suite every adapter has to pass.
+      options:
+        - "Yes, I would open a pull request"
+        - "Yes, with some guidance on where things go"
+        - "I could help test it against my setup"
+        - "No, I am requesting it only"
+    validations:
+      required: true

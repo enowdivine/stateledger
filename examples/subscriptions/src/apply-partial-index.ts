@@ -6,7 +6,7 @@
  * same subject. Without it, optimistic mode is unsafe.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/client/index.js";
 
 const prisma = new PrismaClient();
 

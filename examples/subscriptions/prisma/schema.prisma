@@ -13,6 +13,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Generate into this example rather than into the workspace copy of
+  // @prisma/client. The two examples share one hoisted install, so with
+  // the default output the second `prisma generate` to run replaces the
+  // first example's models and that example stops typechecking. Each one
+  // owning its client means `pnpm -r typecheck` passes for both at once.
+  output   = "../generated/client"
 }
 
 datasource db {

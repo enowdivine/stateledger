@@ -16,13 +16,26 @@
 
 /**
  * Minimal interface for any Drizzle Postgres client capable of executing
- * a raw SQL fragment. `execute()`'s return shape varies by driver — for
+ * a raw SQL fragment. `execute()`'s return shape varies by driver | for
  * `drizzle-orm/node-postgres` it's `{ rows: T[] }` (pg's `QueryResult`),
  * for `drizzle-orm/postgres-js` it's `T[]` directly. Both are unwrapped
- * by the adapter internally.
+ * by the adapter internally, which is why the return type here is just
+ * `unknown`.
+ *
+ * `execute` is deliberately NOT generic. Declaring it as
+ * `execute<T = unknown>(query: any): Promise<T>` promises a method that
+ * returns whatever the caller asks for, and no real Drizzle client can
+ * satisfy that: each flavour's `execute` returns one fixed type (a
+ * `QueryResult<...>` under node-postgres, a `RowList<...>` under
+ * postgres.js). TypeScript therefore rejected every genuine client at the
+ * `createDrizzleAdapter(db)` call site, including the example in this
+ * package's README, with "the types of execute(...).then are incompatible".
+ * The adapter never needed the type parameter | `extractRows` normalizes the
+ * result either way | so the structural contract is stated the honest way
+ * instead.
  */
 export type DrizzleExecutor = {
-  execute<T = unknown>(query: any): Promise<T>;
+  execute(query: any): Promise<unknown>;
 };
 
 /**

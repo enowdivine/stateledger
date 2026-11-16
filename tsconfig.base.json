@@ -8,6 +8,9 @@
       "@stateledger/memory": ["packages/memory/src/index.ts"],
       "@stateledger/prisma": ["packages/prisma/src/index.ts"],
       "@stateledger/drizzle": ["packages/drizzle/src/index.ts"],
+      "@stateledger/pg": ["packages/pg/src/index.ts"],
+      "@stateledger/kysely": ["packages/kysely/src/index.ts"],
+      "@stateledger/typeorm": ["packages/typeorm/src/index.ts"],
       "@stateledger/outbox": ["packages/outbox/src/index.ts"]
     },
     "target": "ES2022",

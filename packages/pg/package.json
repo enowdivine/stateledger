@@ -1,0 +1,85 @@
+{
+  "name": "@stateledger/pg",
+  "version": "1.0.0",
+  "description": "node-postgres and postgres.js adapter for stateledger, for backends with no ORM at all.",
+  "license": "MIT",
+  "author": {
+    "name": "Enow Divine",
+    "email": "sirdivine16@gmail.com",
+    "url": "https://github.com/enowdivine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enowdivine/stateledger.git",
+    "directory": "packages/pg"
+  },
+  "homepage": "https://github.com/enowdivine/stateledger#readme",
+  "bugs": {
+    "url": "https://github.com/enowdivine/stateledger/issues"
+  },
+  "keywords": [
+    "state-machine",
+    "pg",
+    "node-postgres",
+    "postgres.js",
+    "postgres",
+    "stateledger",
+    "audit-trail",
+    "fsm"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@stateledger/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "pg": ">=8",
+    "postgres": ">=3"
+  },
+  "devDependencies": {
+    "pg": "^8.23.1",
+    "@types/pg": "^8.11.10",
+    "postgres": "^4.1.1",
+    "testcontainers": "^10.16.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "postgres": {
+      "optional": true
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@stateledger/memory",
   "version": "1.0.1",
-  "description": "In-memory adapter for stateledger — for tests, hello-world demos, and prototyping.",
+  "description": "In-memory adapter for stateledger \u2014 for tests, hello-world demos, and prototyping.",
   "license": "MIT",
   "author": {
     "name": "Enow Divine",
@@ -30,12 +30,20 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

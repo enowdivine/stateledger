@@ -1,7 +1,7 @@
 {
   "name": "@stateledger/core",
   "version": "1.0.0",
-  "description": "Database-backed state machine for Node and TypeScript — core (ORM-agnostic).",
+  "description": "Database-backed state machine for Node and TypeScript \u2014 core (ORM-agnostic).",
   "license": "MIT",
   "author": {
     "name": "Enow Divine",
@@ -32,17 +32,30 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./contract-tests": {
-      "types": "./dist/contract-tests.d.ts",
-      "import": "./dist/contract-tests.js",
-      "require": "./dist/contract-tests.cjs"
+      "import": {
+        "types": "./dist/contract-tests.d.ts",
+        "default": "./dist/contract-tests.js"
+      },
+      "require": {
+        "types": "./dist/contract-tests.d.cts",
+        "default": "./dist/contract-tests.cjs"
+      }
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

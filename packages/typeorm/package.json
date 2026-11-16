@@ -1,0 +1,76 @@
+{
+  "name": "@stateledger/typeorm",
+  "version": "1.0.0",
+  "description": "TypeORM + Postgres adapter for stateledger, persisted and concurrency-safe state machines.",
+  "license": "MIT",
+  "author": {
+    "name": "Enow Divine",
+    "email": "sirdivine16@gmail.com",
+    "url": "https://github.com/enowdivine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enowdivine/stateledger.git",
+    "directory": "packages/typeorm"
+  },
+  "homepage": "https://github.com/enowdivine/stateledger#readme",
+  "bugs": {
+    "url": "https://github.com/enowdivine/stateledger/issues"
+  },
+  "keywords": [
+    "state-machine",
+    "typeorm",
+    "postgres",
+    "nestjs",
+    "stateledger",
+    "audit-trail",
+    "fsm"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@stateledger/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "typeorm": ">=0.3"
+  },
+  "devDependencies": {
+    "typeorm": "^1.1.3",
+    "pg": "^8.23.1",
+    "@types/pg": "^8.11.10",
+    "reflect-metadata": "^0.2.2",
+    "testcontainers": "^10.16.0"
+  }
+}

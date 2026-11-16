@@ -1,0 +1,20 @@
+# Blank issues are off on purpose. Both forms carry the environment fields
+# that triage actually needs, and a bug filed without the adapter, Postgres
+# version, and locking mode takes two round trips before it can be read.
+# Anything that fits neither form belongs in Discussions, linked below.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/enowdivine/stateledger/discussions
+    about: >
+      How to model a machine, which adapter to pick, whether a behaviour is
+      intended. Discussions keep the issue tracker to defects and proposals,
+      and the answers stay searchable for the next person.
+
+  - name: Paid support and engagements
+    url: https://stateledger.saassimplified.net/support
+    about: >
+      For teams that need this reviewed inside their own payment path, a
+      migration done with them, or a response commitment community support
+      cannot give.

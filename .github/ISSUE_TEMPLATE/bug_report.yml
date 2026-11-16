@@ -1,0 +1,207 @@
+name: Bug report
+description: Something behaves differently from what the docs, types, or adapter contract promise.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file this. stateledger sits in state paths
+        where a wrong answer is a correctness problem, so the more of the
+        environment you can pin down below, the faster this gets diagnosed.
+
+        If you are not reporting a defect but asking how to model something,
+        please open a discussion instead. Questions get better answers there.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing open and closed issues and did not find this.
+          required: true
+        - label: I am on a supported Node version (20 or newer).
+          required: false
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: Where you believe the bug lives. Pick "Not sure" if you cannot tell yet.
+      options:
+        - "@stateledger/core"
+        - "@stateledger/memory"
+        - "@stateledger/prisma"
+        - "@stateledger/drizzle"
+        - "@stateledger/pg"
+        - "@stateledger/kysely"
+        - "@stateledger/typeorm"
+        - "@stateledger/outbox"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: stateledger versions
+      description: >
+        Version of the package above plus the version of @stateledger/core you
+        have installed. `npm ls @stateledger/core` or the equivalent in your
+        package manager prints both.
+      placeholder: "@stateledger/drizzle 1.0.0, @stateledger/core 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Adapter in use
+      description: >
+        Which adapter the failing machine was bound to. This matters even for
+        suspected core bugs, since locking and write behaviour differ per adapter.
+      options:
+        - "createPrismaAdapter"
+        - "createDrizzleAdapter"
+        - "createPgAdapter (node-postgres)"
+        - "createPostgresJsAdapter (postgres.js)"
+        - "createKyselyAdapter"
+        - "createTypeOrmAdapter"
+        - "In-memory adapter"
+        - "A custom adapter I wrote"
+    validations:
+      required: true
+
+  - type: input
+    id: orm_version
+    attributes:
+      label: ORM or driver version
+      description: Version of Prisma, Drizzle, Kysely, TypeORM, pg, or postgres.js that the adapter wraps.
+      placeholder: "drizzle-orm 0.36.4, pg 8.13.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: locking
+    attributes:
+      label: Locking mode
+      description: >
+        The `locking` option passed to the adapter factory. Pessimistic is the
+        default and takes `pg_advisory_xact_lock` per subject. Optimistic skips
+        the lock and relies on the partial unique index on `most_recent`.
+      options:
+        - "pessimistic (the default, nothing passed)"
+        - "optimistic"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: postgres_version
+    attributes:
+      label: Postgres version and host
+      description: >
+        Output of `select version()` is ideal. Name the host too if it is not
+        plain Postgres (Neon, Supabase, RDS, Vercel Postgres, CockroachDB).
+        Write "n/a" if you are on the in-memory adapter.
+      placeholder: "PostgreSQL 16.3 on Neon"
+    validations:
+      required: true
+
+  - type: input
+    id: node_version
+    attributes:
+      label: Node version
+      description: Output of `node --version`.
+      placeholder: "v20.18.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: schema
+    attributes:
+      label: Transitions table schema
+      description: >
+        The guarantees depend on the shipped DDL, in particular the partial
+        unique index on `most_recent` and the unique index on
+        `(machine, subject_id, sort_key)`. A hand-rolled table missing either
+        one explains a whole class of reports.
+      options:
+        - "Applied the schema the adapter ships unmodified"
+        - "Applied it through a migration tool, indexes included"
+        - "Hand-written or modified table"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: >
+        The smallest `defineMachine` definition plus the calls that trigger the
+        bug. Trim this to the shortest thing that still fails. A link to a repo
+        or gist is welcome, but please keep the essentials inline so the issue
+        stays readable on its own.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include what ended up in the transitions table if the rows are part of the problem.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: error_class
+    attributes:
+      label: Which error was thrown
+      description: >
+        Every library error extends `StateledgerError`. `err.constructor.name`
+        or `err.name` tells you which one you got. The distinction matters:
+        `OptimisticConcurrencyError` is a lost race you are expected to retry,
+        while `AdapterError` wraps a failure from the database layer.
+      options:
+        - "AdapterError"
+        - "OptimisticConcurrencyError"
+        - "InvalidTransition"
+        - "GuardRejected"
+        - "StaleSubjectError"
+        - "StateledgerError (base class, nothing more specific)"
+        - "An error from somewhere else, not a stateledger class"
+        - "No error was thrown, the result was just wrong"
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Full error output
+      description: >
+        The whole thing: message, stack, and `error.cause` if it is set.
+        `AdapterError` keeps the underlying database error on `cause`, and that
+        is usually the part that identifies the root cause.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: >
+        Concurrency in play, whether you passed your own transaction in, an
+        existing `subjectStateColumn`, a custom `tableName`, worker counts for
+        outbox issues.
+    validations:
+      required: false

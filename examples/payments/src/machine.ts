@@ -8,7 +8,7 @@
 
 import { defineMachine } from "@stateledger/core";
 import { enqueue } from "@stateledger/outbox";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../generated/client/index.js";
 
 export type PaymentSubject = {
   id: string;

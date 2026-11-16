@@ -144,3 +144,7 @@ vite.config.ts.timestamp-*
 
 # Local working notes — not for publishing
 NOTES.md
+
+# Per-example Prisma clients. Each example generates its own so the two do
+# not overwrite each other in the shared @prisma/client install.
+examples/*/generated/

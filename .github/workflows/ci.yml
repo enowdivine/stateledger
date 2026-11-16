@@ -63,8 +63,26 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Every adapter runs the shared contract suite plus its own edge cases
+      # against a real Postgres. A suite that is not listed here does not run,
+      # and a suite that does not run is a suite that rots: the drizzle
+      # adapter shipped a broken `stateAt()` on postgres.js for two releases
+      # because only one of its two supported drivers was ever exercised.
+      # Adding an adapter means adding a step here.
       - name: Prisma adapter — integration
         run: pnpm --filter @stateledger/prisma test:integration
 
       - name: Drizzle adapter — integration
         run: pnpm --filter @stateledger/drizzle test:integration
+
+      - name: pg adapter — integration
+        run: pnpm --filter @stateledger/pg test:integration
+
+      - name: Kysely adapter — integration
+        run: pnpm --filter @stateledger/kysely test:integration
+
+      - name: TypeORM adapter — integration
+        run: pnpm --filter @stateledger/typeorm test:integration
+
+      - name: Outbox — integration
+        run: pnpm --filter @stateledger/outbox test:integration

@@ -15,7 +15,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/client/index.js";
 import { createPrismaAdapter } from "@stateledger/prisma";
 import { createWorker, type OutboxHandler, type WorkerEvent } from "@stateledger/outbox";
 import { GuardRejected, InvalidTransition } from "@stateledger/core";

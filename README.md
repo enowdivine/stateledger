@@ -197,7 +197,21 @@ yours.
 | [`@stateledger/memory`](./packages/memory) | In-memory adapter. Great for tests + hello-world demos. | Published |
 | [`@stateledger/prisma`](./packages/prisma) | Prisma + Postgres adapter. Pessimistic locks by default, optimistic opt-in. | Published |
 | [`@stateledger/drizzle`](./packages/drizzle) | Drizzle + Postgres adapter. Same shape as the Prisma adapter, works with any Drizzle Postgres driver. | Published |
+| [`@stateledger/pg`](./packages/pg) | Raw-driver adapter for backends with no ORM. `createPgAdapter` for node-postgres, `createPostgresJsAdapter` for postgres.js. | Published |
+| [`@stateledger/kysely`](./packages/kysely) | Kysely + Postgres adapter. For teams who want full type safety without an ORM. | Published |
+| [`@stateledger/typeorm`](./packages/typeorm) | TypeORM + Postgres adapter. Takes a `DataSource` or joins an existing `EntityManager`, which is the usual case inside a NestJS service. | Published |
 | [`@stateledger/outbox`](./packages/outbox) | Transactional outbox — `enqueue()` inside your transition tx, plus a `createWorker()` that polls, claims (`FOR UPDATE SKIP LOCKED`), dispatches, retries with backoff, and dead-letters. 26 integration tests. | Published in v1.0 |
+
+Every adapter implements the same `Adapter` interface from core and passes the
+same shared contract suite, so switching between them is a one-line change at
+the wiring point. All the Postgres adapters are Postgres-only on purpose: the
+partial unique index on `most_recent` and `pg_advisory_xact_lock` are what
+make the concurrency guarantees hold, and neither has a portable equivalent.
+
+Postgres-compatible hosts (Neon, Supabase, Vercel Postgres, RDS) work through
+the existing adapters with no extra package. CockroachDB has no advisory
+locks, so use the optimistic locking mode there and retry on
+`OptimisticConcurrencyError`.
 
 ## Development
 
@@ -205,8 +219,12 @@ yours.
 pnpm install
 pnpm build
 pnpm test              # unit + in-memory contract tests
-pnpm --filter @stateledger/prisma test:integration   # real Postgres via testcontainers (needs Docker)
-pnpm --filter @stateledger/drizzle test:integration  # same, against the Drizzle adapter
+# Real Postgres via testcontainers, needs Docker. Same contract suite each time.
+pnpm --filter @stateledger/prisma test:integration
+pnpm --filter @stateledger/drizzle test:integration
+pnpm --filter @stateledger/pg test:integration
+pnpm --filter @stateledger/kysely test:integration
+pnpm --filter @stateledger/typeorm test:integration
 ```
 
 Requires Node 20+ and pnpm 9+.

@@ -30,6 +30,16 @@ import type {
 const DEFAULT_TABLE = "stateledger_transitions";
 
 /**
+ * Postgres's NAMEDATALEN - 1. An identifier longer than this is TRUNCATED
+ * rather than rejected, with no error and no warning, so a `tableName` of 70
+ * characters would quietly address its own first 63. Worse, two configured
+ * names sharing a 63-character prefix resolve to the same physical table,
+ * which in a per-tenant-table layout mixes tenants together silently. Reject
+ * instead.
+ */
+const MAX_IDENTIFIER_LENGTH = 63;
+
+/**
  * Raw row shape returned by Postgres before we map to `TransitionRow`.
  */
 type RawTransitionRow = {
@@ -94,7 +104,7 @@ class DrizzleAdapter implements Adapter<DrizzleExecutor> {
     subjectId: string,
   ): Promise<TransitionRow | null> {
     try {
-      const result = await tx.execute<unknown>(
+      const result = await tx.execute(
         sql`SELECT * FROM ${sql.identifier(this.tableName)}
               WHERE machine = ${machine}
                 AND subject_id = ${subjectId}
@@ -129,7 +139,7 @@ class DrizzleAdapter implements Adapter<DrizzleExecutor> {
       // Insert the new row and return it. `metadata` is JSON-encoded here
       // because Drizzle's raw execute doesn't stringify objects for JSONB.
       const metadataJson = JSON.stringify(row.metadata ?? {});
-      const result = await tx.execute<unknown>(
+      const result = await tx.execute(
         sql`INSERT INTO ${sql.identifier(this.tableName)} (
               machine, subject_id, from_state, to_state, sort_key, most_recent,
               actor_id, actor_type, metadata, machine_version
@@ -173,7 +183,7 @@ class DrizzleAdapter implements Adapter<DrizzleExecutor> {
   ): Promise<TransitionRow[]> {
     const client = tx ?? this.root;
     try {
-      const result = await client.execute<unknown>(
+      const result = await client.execute(
         sql`SELECT * FROM ${sql.identifier(this.tableName)}
               WHERE machine = ${machine}
                 AND subject_id = ${subjectId}
@@ -200,11 +210,22 @@ class DrizzleAdapter implements Adapter<DrizzleExecutor> {
       // sort_key DESC (not created_at DESC) for the tiebreak — sortKey is
       // monotonic per (machine, subjectId) and is the canonical ordering
       // used everywhere else in the library.
-      const result = await client.execute<unknown>(
+      //
+      // The cutoff is bound as an ISO string and cast server-side rather
+      // than handed over as a `Date`. Binding the Date directly works under
+      // `drizzle-orm/node-postgres`, which serializes Dates itself, and
+      // throws under `drizzle-orm/postgres-js`, which asks the server to
+      // describe the parameter and then applies its own serializer for the
+      // returned OID | that serializer wants a string and rejects a Date
+      // with "The 'string' argument must be of type string". Going through
+      // text means both flavors send the same bytes and Postgres does the
+      // conversion. `toISOString()` is always UTC, so no local-timezone
+      // reading of the cutoff can creep in either.
+      const result = await client.execute(
         sql`SELECT * FROM ${sql.identifier(this.tableName)}
               WHERE machine = ${machine}
                 AND subject_id = ${subjectId}
-                AND created_at <= ${at}
+                AND created_at <= ${at.toISOString()}::timestamptz
               ORDER BY sort_key DESC
               LIMIT 1`,
       );
@@ -379,6 +400,12 @@ function assertValidIdentifier(name: string): void {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
     throw new AdapterError(
       `invalid SQL identifier: ${JSON.stringify(name)} (must match /^[A-Za-z_][A-Za-z0-9_]*$/)`,
+    );
+  }
+  if (name.length > MAX_IDENTIFIER_LENGTH) {
+    throw new AdapterError(
+      `invalid SQL identifier: ${JSON.stringify(name)} is ${name.length} characters; ` +
+        `Postgres truncates identifiers to ${MAX_IDENTIFIER_LENGTH} and would address a different relation`,
     );
   }
 }
